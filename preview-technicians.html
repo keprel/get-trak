@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technician Hub - Technicians Tab Preview</title>
+<style>
+    :root {
+        --red: #DC2626;
+        --red-light: #b91c1c;
+        --dark: #111827;
+        --gray: #6b7280;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: white;
+        color: var(--dark);
+        padding: 32px 24px;
+        max-width: 960px;
+        margin: 0 auto;
+    }
+    h1 {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 8px;
+    }
+    .preview-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #fef2f2;
+        color: var(--red);
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 24px;
+    }
+
+    /* Tabs */
+    .techhub-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 28px;
+        border-bottom: 1px solid #f3f4f6;
+        padding-bottom: 12px;
+    }
+    .techhub-tab {
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--gray);
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-family: inherit;
+    }
+    .techhub-tab:hover { color: var(--dark); background: #f9fafb; }
+    .techhub-tab.active { color: var(--red); background: #fef2f2; font-weight: 600; }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Stats */
+    .th-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .th-stat-card {
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px solid #f3f4f6;
+        background: white;
+        text-align: center;
+    }
+    .th-stat-number {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--dark);
+        letter-spacing: -1px;
+    }
+    .th-stat-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--gray);
+        margin-top: 2px;
+    }
+    .stat-interview .th-stat-number { color: #2563eb; }
+    .stat-hired .th-stat-number { color: #d97706; }
+    .stat-active .th-stat-number { color: #10b981; }
+    .stat-terminated .th-stat-number { color: #ef4444; }
+
+    /* Filter Chips */
+    .th-filter-bar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .th-filter-chip {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: inherit;
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: var(--gray);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .th-filter-chip:hover { border-color: var(--red); color: var(--red); }
+    .th-filter-chip.active { background: #fef2f2; color: var(--red); border-color: var(--red); font-weight: 600; }
+
+    /* Add Button */
+    .th-btn {
+        padding: 10px 22px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        border: none;
+    }
+    .th-btn-primary { background: var(--red); color: white; }
+    .th-btn-primary:hover { background: var(--red-light); }
+    .th-btn-secondary { background: white; color: var(--gray); border: 1.5px solid #d1d5db; }
+    .th-btn-secondary:hover { border-color: var(--red); color: var(--red); }
+
+    /* Tech Cards */
+    .th-tech-card {
+        border: 1px solid #f3f4f6;
+        border-radius: 12px;
+        background: white;
+        transition: all 0.2s;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+    .th-tech-card:hover {
+        border-color: #e5e7eb;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+    .th-tech-summary {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        cursor: pointer;
+    }
+    .th-tech-avatar {
+        width: 42px;
+        height: 42px;
+        background: #fef2f2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--red);
+    }
+    .th-tech-info { flex: 1; min-width: 0; }
+    .th-tech-info h4 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 2px;
+    }
+    .th-tech-position {
+        font-size: 12px;
+        color: var(--gray);
+    }
+    .th-tech-status {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    .th-tech-status-interview { background: #eff6ff; color: #2563eb; }
+    .th-tech-status-hired { background: #fffbeb; color: #d97706; }
+    .th-tech-status-active { background: #ecfdf5; color: #10b981; }
+    .th-tech-status-terminated { background: #fef2f2; color: #ef4444; }
+
+    .th-tech-chevron {
+        width: 20px;
+        height: 20px;
+        stroke: #d1d5db;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+        transition: transform 0.3s;
+    }
+    .th-tech-card.expanded .th-tech-chevron { transform: rotate(180deg); }
+
+    /* Expanded Detail */
+    .th-tech-detail {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease;
+        padding: 0 20px;
+    }
+    .th-tech-card.expanded .th-tech-detail {
+        max-height: 1200px;
+        padding: 0 20px 20px;
+    }
+
+    /* Status Select */
+    .th-status-select {
+        padding: 6px 12px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: inherit;
+        background: white;
+        cursor: pointer;
+        outline: none;
+    }
+    .th-status-select:focus { border-color: var(--red); }
+
+    /* Termination Info */
+    .th-termination-info {
+        margin-top: 8px;
+        padding: 10px 14px;
+        background: #fef2f2;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #991b1b;
+    }
+    .th-termination-info strong { font-weight: 700; }
+
+    /* Per-Tech Documents */
+    .th-tech-docs {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #f3f4f6;
+    }
+    .th-tech-docs h5 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 10px;
+    }
+    .th-tech-doc-upload-zone {
+        border: 1.5px dashed #d1d5db;
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #fafafa;
+        margin-bottom: 10px;
+        font-size: 13px;
+        color: var(--gray);
+    }
+    .th-tech-doc-upload-zone:hover {
+        border-color: var(--red);
+        background: #fef2f2;
+    }
+    .th-tech-doc-list { display: grid; gap: 6px; }
+    .th-tech-doc-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border: 1px solid #f3f4f6;
+        border-radius: 8px;
+        font-size: 13px;
+        background: white;
+    }
+    .th-tech-doc-item svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--red);
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+    }
+    .th-tech-doc-item-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--dark);
+        font-weight: 500;
+    }
+    .th-tech-doc-item-meta {
+        font-size: 11px;
+        color: #9ca3af;
+        flex-shrink: 0;
+    }
+    .th-tech-doc-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .th-icon-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1.5px solid #e5e7eb;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .th-icon-btn:hover { border-color: var(--red); background: #fef2f2; }
+    .th-icon-btn svg {
+        width: 14px;
+        height: 14px;
+        stroke: var(--gray);
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .th-icon-btn:hover svg { stroke: var(--red); }
+    .th-icon-btn-danger:hover { border-color: #ef4444; }
+    .th-icon-btn-danger:hover svg { stroke: #ef4444; }
+
+    /* Checklist */
+    .th-tech-checklist {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #f3f4f6;
+    }
+    .th-tech-checklist h5 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 10px;
+    }
+    .th-checklist-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .th-checklist-header h5 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 0;
+    }
+    .th-onboarding-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .th-onboarding-badge.complete { background: #ecfdf5; color: #10b981; }
+    .th-onboarding-badge.partial { background: #fffbeb; color: #d97706; }
+    .th-onboarding-badge.none { background: #f3f4f6; color: var(--gray); }
+    .th-checklist-list { list-style: none; }
+    .th-checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f9fafb;
+        font-size: 14px;
+        color: var(--dark);
+    }
+    .th-checklist-item:last-child { border-bottom: none; }
+    .th-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #d1d5db;
+        border-radius: 6px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .th-checkbox:hover { border-color: var(--red); }
+    .th-checkbox.checked {
+        background: #10b981;
+        border-color: #10b981;
+    }
+    .th-checkbox.checked svg {
+        width: 14px;
+        height: 14px;
+        stroke: white;
+        fill: none;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .th-checklist-label {
+        flex: 1;
+        cursor: pointer;
+    }
+    .th-checklist-item.done .th-checklist-label {
+        text-decoration: line-through;
+        color: var(--gray);
+    }
+    .th-checklist-remove {
+        width: 22px;
+        height: 22px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        opacity: 0;
+        transition: all 0.2s;
+    }
+    .th-checklist-item:hover .th-checklist-remove { opacity: 1; }
+    .th-checklist-remove:hover { background: #fef2f2; }
+    .th-checklist-remove svg {
+        width: 14px;
+        height: 14px;
+        stroke: #ef4444;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .th-checklist-add {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .th-checklist-add input {
+        flex: 1;
+        padding: 6px 10px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: inherit;
+        outline: none;
+    }
+    .th-checklist-add input:focus { border-color: var(--red); }
+    .th-checklist-add button {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        border: none;
+        background: var(--red);
+        color: white;
+        cursor: pointer;
+    }
+    .th-checklist-add button:hover { background: var(--red-light); }
+    .th-checklist-empty {
+        font-size: 12px;
+        color: #9ca3af;
+        padding: 4px 0;
+    }
+
+    /* Template Editor Modal */
+    .th-template-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1100;
+    }
+    .th-template-overlay.active { display: flex; }
+    .th-template-box {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .th-template-box h3 {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+    .th-template-box > p {
+        font-size: 13px;
+        color: var(--gray);
+        margin-bottom: 20px;
+    }
+    .th-template-list { list-style: none; margin-bottom: 12px; }
+    .th-template-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid #f3f4f6;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        font-size: 14px;
+        color: var(--dark);
+    }
+    .th-template-item span { flex: 1; }
+    .th-template-item-remove {
+        width: 26px;
+        height: 26px;
+        border: 1.5px solid #fca5a5;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+    .th-template-item-remove:hover { background: #fef2f2; }
+    .th-template-item-remove svg {
+        width: 14px;
+        height: 14px;
+        stroke: #ef4444;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .th-template-add-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .th-template-add-row input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+    }
+    .th-template-add-row input:focus { border-color: var(--red); }
+    .th-template-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    /* Notes */
+    .th-tech-notes { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
+    .th-tech-notes label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 6px;
+    }
+    .th-tech-notes textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        resize: vertical;
+        min-height: 70px;
+    }
+    .th-tech-notes textarea:focus { border-color: var(--red); }
+    .th-tech-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    /* Termination Modal Overlay */
+    .th-terminate-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1100;
+    }
+    .th-terminate-overlay.active { display: flex; }
+    .th-terminate-box {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .th-terminate-box h3 {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+    .th-terminate-box > p {
+        font-size: 14px;
+        color: var(--gray);
+        margin-bottom: 20px;
+    }
+    .th-form-group { margin-bottom: 14px; }
+    .th-form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 6px;
+    }
+    .th-terminate-type-btns { display: flex; gap: 8px; }
+    .th-terminate-type-btn {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        border: 1.5px solid #d1d5db;
+        background: white;
+        color: var(--gray);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .th-terminate-type-btn.active {
+        background: #fef2f2;
+        color: var(--red);
+        border-color: var(--red);
+        font-weight: 600;
+    }
+    .th-terminate-type-btn:hover { border-color: var(--red); }
+    .th-form-group textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        resize: vertical;
+        min-height: 70px;
+    }
+    .th-form-group textarea:focus { border-color: var(--red); }
+    .th-terminate-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .th-btn-danger {
+        padding: 10px 22px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        border: none;
+        background: #ef4444;
+        color: white;
+    }
+    .th-btn-danger:hover { background: #dc2626; }
+
+    /* Add Tech Form */
+    .th-add-form {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        background: white;
+        margin-bottom: 24px;
+        display: none;
+    }
+    .th-add-form.visible { display: block; }
+    .th-add-form h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--dark);
+    }
+    .th-form-group input,
+    .th-form-group select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        background: white;
+    }
+    .th-form-group input:focus { border-color: var(--red); }
+    .th-form-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+    /* Assignment dropdowns in tech detail */
+    .th-assignment-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+    }
+    .th-assignment-row label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dark);
+        white-space: nowrap;
+    }
+
+    /* ===== Metrics Dashboard Styles ===== */
+    .metrics-section {
+        margin-bottom: 32px;
+    }
+    .metrics-section-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 16px;
+        letter-spacing: -0.3px;
+    }
+    .metrics-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .metrics-card {
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px solid #f3f4f6;
+        background: white;
+        text-align: center;
+    }
+    .metrics-card-number {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+    .metrics-card-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--gray);
+        margin-top: 2px;
+    }
+    .metrics-total {
+        text-align: right;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--dark);
+        padding: 8px 0;
+    }
+    .metrics-tables-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .metrics-table-wrapper {
+        border: 1px solid #f3f4f6;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .metrics-table-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dark);
+        padding: 14px 16px 10px;
+    }
+    .metrics-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .metrics-table th {
+        text-align: left;
+        padding: 8px 16px;
+        font-weight: 600;
+        color: var(--gray);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #f3f4f6;
+        background: #fafafa;
+    }
+    .metrics-table td {
+        padding: 10px 16px;
+        border-bottom: 1px solid #f9fafb;
+        color: var(--dark);
+    }
+    .metrics-table tr:last-child td {
+        border-bottom: none;
+    }
+    .metrics-table .rate-good { color: #10b981; font-weight: 600; }
+    .metrics-table .rate-mid { color: #d97706; font-weight: 600; }
+    .metrics-table .rate-low { color: #ef4444; font-weight: 600; }
+
+    .attrition-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .attrition-card {
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px solid #f3f4f6;
+        background: white;
+        text-align: center;
+    }
+    .attrition-card-number {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+    .attrition-card-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--gray);
+        margin-top: 2px;
+    }
+    .attrition-quit .attrition-card-number { color: #d97706; }
+    .attrition-fired .attrition-card-number { color: #ef4444; }
+
+    .badge-quit {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #fffbeb;
+        color: #d97706;
+    }
+    .badge-fired {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #fef2f2;
+        color: #ef4444;
+    }
+    .onboarding-bar {
+        width: 60px;
+        height: 6px;
+        background: #f3f4f6;
+        border-radius: 3px;
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+    .onboarding-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: #10b981;
+    }
+
+    @media (max-width: 640px) {
+        .th-stats { grid-template-columns: repeat(2, 1fr); }
+        .th-tech-summary { gap: 10px; }
+        .th-tech-position { display: none; }
+        .metrics-cards { grid-template-columns: 1fr; }
+        .metrics-tables-row { grid-template-columns: 1fr; }
+        .attrition-cards { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<h1>Technician Hub</h1>
+<div class="preview-badge">PREVIEW — Static Mockup</div>
+
+<!-- Tabs -->
+<div class="techhub-tabs">
+    <button class="techhub-tab" onclick="switchTab('documents')">Documents</button>
+    <button class="techhub-tab" onclick="switchTab('sops')">SOPs</button>
+    <button class="techhub-tab active" onclick="switchTab('technicians')">Technicians</button>
+    <button class="techhub-tab" onclick="switchTab('metrics')">Metrics</button>
+</div>
+
+<!-- ===== TAB PANEL: Documents (placeholder) ===== -->
+<div class="tab-panel" id="tab-documents">
+    <div style="padding:40px 0;text-align:center;color:var(--gray);font-size:14px">
+        Documents tab coming soon.
+    </div>
+</div>
+
+<!-- ===== TAB PANEL: SOPs (placeholder) ===== -->
+<div class="tab-panel" id="tab-sops">
+    <div style="padding:40px 0;text-align:center;color:var(--gray);font-size:14px">
+        SOPs tab coming soon.
+    </div>
+</div>
+
+<!-- ===== TAB PANEL: Technicians ===== -->
+<div class="tab-panel active" id="tab-technicians">
+
+<!-- Stats -->
+<div class="th-stats">
+    <div class="th-stat-card stat-interview">
+        <div class="th-stat-number">3</div>
+        <div class="th-stat-label">Interview</div>
+    </div>
+    <div class="th-stat-card stat-hired">
+        <div class="th-stat-number">1</div>
+        <div class="th-stat-label">Hired</div>
+    </div>
+    <div class="th-stat-card stat-active">
+        <div class="th-stat-number">4</div>
+        <div class="th-stat-label">Active</div>
+    </div>
+    <div class="th-stat-card stat-terminated">
+        <div class="th-stat-number">2</div>
+        <div class="th-stat-label">Terminated</div>
+    </div>
+</div>
+
+<!-- Filter Chips -->
+<div class="th-filter-bar">
+    <button class="th-filter-chip active">All</button>
+    <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Interview</button>
+    <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Hired</button>
+    <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Active</button>
+    <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Terminated</button>
+</div>
+
+<!-- Add Technician Button + Manage Checklist -->
+<div style="margin-bottom:24px;display:flex;gap:10px">
+    <button class="th-btn th-btn-primary" onclick="document.getElementById('add-form').classList.toggle('visible')">Add Technician</button>
+    <button class="th-btn th-btn-secondary" onclick="document.getElementById('template-modal').classList.toggle('active')" style="display:flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Manage Checklist
+    </button>
+</div>
+
+<!-- Add Technician Form (click button above to toggle) -->
+<div class="th-add-form" id="add-form">
+    <h3>Add Technician</h3>
+    <div class="th-form-group">
+        <label>Full Name</label>
+        <input type="text" placeholder="e.g. John Smith">
+    </div>
+    <div class="th-form-group">
+        <label>Phone (optional)</label>
+        <input type="tel" placeholder="(555) 123-4567">
+    </div>
+    <div class="th-form-group">
+        <label>Email (optional)</label>
+        <input type="email" placeholder="john@example.com">
+    </div>
+    <div class="th-form-group">
+        <label>Position</label>
+        <input type="text" placeholder="e.g. ADAS Technician">
+    </div>
+    <div class="th-form-group">
+        <label>Interview Date</label>
+        <input type="date">
+    </div>
+    <div class="th-form-group">
+        <label>Notes (optional)</label>
+        <textarea placeholder="Any initial notes..." style="width:100%;padding:10px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;outline:none;resize:vertical;min-height:70px"></textarea>
+    </div>
+    <div class="th-form-actions">
+        <button class="th-btn th-btn-primary">Add Technician</button>
+        <button class="th-btn th-btn-secondary">Cancel</button>
+    </div>
+</div>
+
+<!-- ===== TECHNICIAN CARDS ===== -->
+
+<!-- Card 1: Marcus Johnson — Interview, Regional Manager: Brandon -->
+<div class="th-tech-card" onclick="this.classList.toggle('expanded')">
+    <div class="th-tech-summary">
+        <div class="th-tech-avatar">MJ</div>
+        <div class="th-tech-info">
+            <h4>Marcus Johnson</h4>
+            <div class="th-tech-position">ADAS Technician</div>
+        </div>
+        <span class="th-tech-status th-tech-status-interview">Interview</span>
+        <svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="th-tech-detail">
+        <div style="font-size:13px;color:var(--gray);padding-top:12px;display:flex;gap:16px;flex-wrap:wrap">
+            <span>marcus.j@gmail.com</span>
+            <span>(555) 234-5678</span>
+            <span>Interview: 2/25/2026</span>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
+            <select class="th-status-select">
+                <option selected>Interview</option>
+                <option>Hired</option>
+                <option>Active</option>
+                <option>Terminated</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Regional Manager:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option selected>Brandon</option>
+                <option>Scott</option>
+                <option>Tyler</option>
+                <option>Aaron</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Role:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option selected>Technician</option>
+                <option>Pod Leader</option>
+            </select>
+        </div>
+        <!-- Checklist -->
+        <div class="th-tech-checklist">
+            <div class="th-checklist-header">
+                <h5>Checklist</h5>
+                <span class="th-onboarding-badge none">0% onboarded</span>
+            </div>
+            <ul class="th-checklist-list">
+                <li class="th-checklist-item" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Background check</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation();this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox"></div>
+                    <span class="th-checklist-label">Reference check</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation();this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox"></div>
+                    <span class="th-checklist-label">Offer letter sent</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation();this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox"></div>
+                    <span class="th-checklist-label">W-4 form signed</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation();this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox"></div>
+                    <span class="th-checklist-label">Equipment issued</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation();this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+            </ul>
+            <div class="th-checklist-add">
+                <input type="text" placeholder="Add checklist item..." onclick="event.stopPropagation()">
+                <button onclick="event.stopPropagation();var input=this.previousElementSibling;if(input.value.trim()){var li=document.createElement('li');li.className='th-checklist-item';li.innerHTML='<div class=th-checkbox></div><span class=th-checklist-label>'+input.value.trim()+'</span><button class=th-checklist-remove onclick=event.stopPropagation();this.parentElement.remove()><svg viewBox=&quot;0 0 24 24&quot;><line x1=18 y1=6 x2=6 y2=18/><line x1=6 y1=6 x2=18 y2=18/></svg></button>';li.onclick=function(){this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')};this.parentElement.previousElementSibling.appendChild(li);input.value=''}">Add</button>
+            </div>
+        </div>
+        <!-- Documents -->
+        <div class="th-tech-docs">
+            <h5>Documents</h5>
+            <div class="th-tech-doc-upload-zone">Click to upload a document</div>
+            <div class="th-tech-doc-list">
+                <div class="th-tech-doc-item">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span class="th-tech-doc-item-name">Marcus_Johnson_Resume.pdf</span>
+                    <span class="th-tech-doc-item-meta">PDF · 245 KB</span>
+                    <div class="th-tech-doc-item-actions">
+                        <button class="th-icon-btn" title="Download"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                        <button class="th-icon-btn th-icon-btn-danger" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Notes -->
+        <div class="th-tech-notes">
+            <label>Notes</label>
+            <textarea placeholder="Add notes..." onclick="event.stopPropagation()">Strong candidate. Has 3 years experience with Autel systems. Second interview scheduled for next week.</textarea>
+        </div>
+        <div class="th-tech-actions">
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px" onclick="event.stopPropagation()">Save Notes</button>
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px;color:#ef4444;border-color:#fca5a5" onclick="event.stopPropagation()">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- Card 2: Sarah Lee — Hired, Regional Manager: Scott -->
+<div class="th-tech-card" onclick="this.classList.toggle('expanded')">
+    <div class="th-tech-summary">
+        <div class="th-tech-avatar">SL</div>
+        <div class="th-tech-info">
+            <h4>Sarah Lee</h4>
+            <div class="th-tech-position">Calibration Specialist</div>
+        </div>
+        <span class="th-tech-status th-tech-status-hired">Hired</span>
+        <svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="th-tech-detail">
+        <div style="font-size:13px;color:var(--gray);padding-top:12px;display:flex;gap:16px;flex-wrap:wrap">
+            <span>sarah.lee@adassafe.com</span>
+            <span>(555) 876-5432</span>
+            <span>Interview: 1/15/2026</span>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
+            <select class="th-status-select">
+                <option>Interview</option>
+                <option selected>Hired</option>
+                <option>Active</option>
+                <option>Terminated</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Regional Manager:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option>Brandon</option>
+                <option selected>Scott</option>
+                <option>Tyler</option>
+                <option>Aaron</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Role:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option selected>Technician</option>
+                <option>Pod Leader</option>
+            </select>
+        </div>
+        <!-- Checklist -->
+        <div class="th-tech-checklist">
+            <div class="th-checklist-header">
+                <h5>Checklist</h5>
+                <span class="th-onboarding-badge partial">80% onboarded</span>
+            </div>
+            <ul class="th-checklist-list">
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Background check</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Reference check</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Offer letter sent</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">W-4 form signed</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox"></div>
+                    <span class="th-checklist-label">Equipment issued</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+            </ul>
+            <div class="th-checklist-add">
+                <input type="text" placeholder="Add checklist item..." onclick="event.stopPropagation()">
+                <button onclick="event.stopPropagation()">Add</button>
+            </div>
+        </div>
+        <div class="th-tech-docs">
+            <h5>Documents</h5>
+            <div class="th-tech-doc-upload-zone">Click to upload a document</div>
+            <div class="th-tech-doc-list">
+                <div class="th-tech-doc-item">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span class="th-tech-doc-item-name">Sarah_Lee_Resume.pdf</span>
+                    <span class="th-tech-doc-item-meta">PDF · 189 KB</span>
+                    <div class="th-tech-doc-item-actions">
+                        <button class="th-icon-btn" title="Download"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                        <button class="th-icon-btn th-icon-btn-danger" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>
+                </div>
+                <div class="th-tech-doc-item">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span class="th-tech-doc-item-name">Employment_Agreement_Signed.pdf</span>
+                    <span class="th-tech-doc-item-meta">PDF · 312 KB</span>
+                    <div class="th-tech-doc-item-actions">
+                        <button class="th-icon-btn" title="Download"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                        <button class="th-icon-btn th-icon-btn-danger" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="th-tech-notes">
+            <label>Notes</label>
+            <textarea placeholder="Add notes..." onclick="event.stopPropagation()">Starts Monday. Orientation with Mike at 8am.</textarea>
+        </div>
+        <div class="th-tech-actions">
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px" onclick="event.stopPropagation()">Save Notes</button>
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px;color:#ef4444;border-color:#fca5a5" onclick="event.stopPropagation()">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- Card 3: David Williams — Active, Regional Manager: Brandon, Role: Pod Leader -->
+<div class="th-tech-card" onclick="this.classList.toggle('expanded')">
+    <div class="th-tech-summary">
+        <div class="th-tech-avatar">DW</div>
+        <div class="th-tech-info">
+            <h4>David Williams</h4>
+            <div class="th-tech-position">Senior ADAS Technician</div>
+        </div>
+        <span class="th-tech-status th-tech-status-active">Active</span>
+        <svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="th-tech-detail">
+        <div style="font-size:13px;color:var(--gray);padding-top:12px;display:flex;gap:16px;flex-wrap:wrap">
+            <span>david.w@adassafe.com</span>
+            <span>(555) 345-6789</span>
+            <span>Interview: 9/10/2025</span>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
+            <select class="th-status-select">
+                <option>Interview</option>
+                <option>Hired</option>
+                <option selected>Active</option>
+                <option>Terminated</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Regional Manager:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option selected>Brandon</option>
+                <option>Scott</option>
+                <option>Tyler</option>
+                <option>Aaron</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Role:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option>Technician</option>
+                <option selected>Pod Leader</option>
+            </select>
+        </div>
+        <!-- Checklist (all done for active) -->
+        <div class="th-tech-checklist">
+            <div class="th-checklist-header">
+                <h5>Checklist</h5>
+                <span class="th-onboarding-badge complete">100% onboarded</span>
+            </div>
+            <ul class="th-checklist-list">
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Background check</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Reference check</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Offer letter sent</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">W-4 form signed</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+                <li class="th-checklist-item done" onclick="this.classList.toggle('done');this.querySelector('.th-checkbox').classList.toggle('checked')">
+                    <div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <span class="th-checklist-label">Equipment issued</span>
+                    <button class="th-checklist-remove" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </li>
+            </ul>
+            <div class="th-checklist-add">
+                <input type="text" placeholder="Add checklist item..." onclick="event.stopPropagation()">
+                <button onclick="event.stopPropagation()">Add</button>
+            </div>
+        </div>
+        <div class="th-tech-docs">
+            <h5>Documents</h5>
+            <div class="th-tech-doc-upload-zone">Click to upload a document</div>
+            <div class="th-tech-doc-list">
+                <div class="th-tech-doc-item">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span class="th-tech-doc-item-name">NDA_Signed_DWilliams.pdf</span>
+                    <span class="th-tech-doc-item-meta">PDF · 98 KB</span>
+                    <div class="th-tech-doc-item-actions">
+                        <button class="th-icon-btn" title="Download"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                        <button class="th-icon-btn th-icon-btn-danger" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="th-tech-notes">
+            <label>Notes</label>
+            <textarea placeholder="Add notes..." onclick="event.stopPropagation()">Top performer. Handles most Honda and Toyota calibrations. Certified on Autel IA900.</textarea>
+        </div>
+        <div class="th-tech-actions">
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px" onclick="event.stopPropagation()">Save Notes</button>
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px;color:#ef4444;border-color:#fca5a5" onclick="event.stopPropagation()">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- Card 4: Ryan Patel — Terminated (Quit), Regional Manager: Tyler -->
+<div class="th-tech-card" onclick="this.classList.toggle('expanded')">
+    <div class="th-tech-summary">
+        <div class="th-tech-avatar">RP</div>
+        <div class="th-tech-info">
+            <h4>Ryan Patel</h4>
+            <div class="th-tech-position">ADAS Technician</div>
+        </div>
+        <span class="th-tech-status th-tech-status-terminated">Terminated</span>
+        <svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="th-tech-detail">
+        <div style="font-size:13px;color:var(--gray);padding-top:12px;display:flex;gap:16px;flex-wrap:wrap">
+            <span>ryan.p@gmail.com</span>
+            <span>(555) 654-3210</span>
+            <span>Interview: 6/20/2025</span>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
+            <select class="th-status-select">
+                <option>Interview</option>
+                <option>Hired</option>
+                <option>Active</option>
+                <option selected>Terminated</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Regional Manager:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option>Brandon</option>
+                <option>Scott</option>
+                <option selected>Tyler</option>
+                <option>Aaron</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Role:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option selected>Technician</option>
+                <option>Pod Leader</option>
+            </select>
+        </div>
+        <div class="th-termination-info">
+            <strong>Quit</strong> &mdash; Accepted a position at another company. Left on good terms.
+            <div style="margin-top:4px;font-size:11px">1/30/2026</div>
+        </div>
+        <!-- Checklist -->
+        <div class="th-tech-checklist">
+            <div class="th-checklist-header">
+                <h5>Checklist</h5>
+            </div>
+            <ul class="th-checklist-list">
+                <li class="th-checklist-item done"><div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span class="th-checklist-label">Background check</span><button class="th-checklist-remove"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></li>
+                <li class="th-checklist-item done"><div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span class="th-checklist-label">Reference check</span><button class="th-checklist-remove"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></li>
+                <li class="th-checklist-item done"><div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span class="th-checklist-label">Equipment returned</span><button class="th-checklist-remove"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></li>
+            </ul>
+            <div class="th-checklist-add">
+                <input type="text" placeholder="Add checklist item..." onclick="event.stopPropagation()">
+                <button onclick="event.stopPropagation()">Add</button>
+            </div>
+        </div>
+        <div class="th-tech-docs">
+            <h5>Documents</h5>
+            <div class="th-tech-doc-upload-zone">Click to upload a document</div>
+            <div class="th-tech-doc-list">
+                <div style="font-size:12px;color:#9ca3af;padding:4px 0">No documents</div>
+            </div>
+        </div>
+        <div class="th-tech-notes">
+            <label>Notes</label>
+            <textarea placeholder="Add notes..." onclick="event.stopPropagation()">Worked well during his time here. Eligible for rehire.</textarea>
+        </div>
+        <div class="th-tech-actions">
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px" onclick="event.stopPropagation()">Save Notes</button>
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px;color:#ef4444;border-color:#fca5a5" onclick="event.stopPropagation()">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- Card 5: Jake Rodriguez — Terminated (Fired), Regional Manager: Aaron -->
+<div class="th-tech-card" onclick="this.classList.toggle('expanded')">
+    <div class="th-tech-summary">
+        <div class="th-tech-avatar">JR</div>
+        <div class="th-tech-info">
+            <h4>Jake Rodriguez</h4>
+            <div class="th-tech-position">Calibration Technician</div>
+        </div>
+        <span class="th-tech-status th-tech-status-terminated">Terminated</span>
+        <svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="th-tech-detail">
+        <div style="font-size:13px;color:var(--gray);padding-top:12px;display:flex;gap:16px;flex-wrap:wrap">
+            <span>jake.r@gmail.com</span>
+            <span>(555) 111-2222</span>
+            <span>Interview: 4/01/2025</span>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
+            <select class="th-status-select">
+                <option>Interview</option>
+                <option>Hired</option>
+                <option>Active</option>
+                <option selected>Terminated</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Regional Manager:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option>Brandon</option>
+                <option>Scott</option>
+                <option>Tyler</option>
+                <option selected>Aaron</option>
+            </select>
+        </div>
+        <div class="th-assignment-row">
+            <label>Role:</label>
+            <select class="th-status-select" onclick="event.stopPropagation()">
+                <option selected>Technician</option>
+                <option>Pod Leader</option>
+            </select>
+        </div>
+        <div class="th-termination-info">
+            <strong>Fired</strong> &mdash; Repeated no-shows without notice.
+            <div style="margin-top:4px;font-size:11px">12/15/2025</div>
+        </div>
+        <!-- Checklist -->
+        <div class="th-tech-checklist">
+            <div class="th-checklist-header">
+                <h5>Checklist</h5>
+            </div>
+            <ul class="th-checklist-list">
+                <li class="th-checklist-item done"><div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span class="th-checklist-label">Background check</span><button class="th-checklist-remove"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></li>
+                <li class="th-checklist-item"><div class="th-checkbox"></div><span class="th-checklist-label">Equipment returned</span><button class="th-checklist-remove"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></li>
+                <li class="th-checklist-item done"><div class="th-checkbox checked"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span class="th-checklist-label">Final paycheck issued</span><button class="th-checklist-remove"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></li>
+            </ul>
+            <div class="th-checklist-add">
+                <input type="text" placeholder="Add checklist item..." onclick="event.stopPropagation()">
+                <button onclick="event.stopPropagation()">Add</button>
+            </div>
+        </div>
+        <div class="th-tech-docs">
+            <h5>Documents</h5>
+            <div class="th-tech-doc-upload-zone">Click to upload a document</div>
+            <div class="th-tech-doc-list">
+                <div class="th-tech-doc-item">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span class="th-tech-doc-item-name">Termination_Letter_JRodriguez.pdf</span>
+                    <span class="th-tech-doc-item-meta">PDF · 67 KB</span>
+                    <div class="th-tech-doc-item-actions">
+                        <button class="th-icon-btn" title="Download"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                        <button class="th-icon-btn th-icon-btn-danger" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="th-tech-notes">
+            <label>Notes</label>
+            <textarea placeholder="Add notes..." onclick="event.stopPropagation()">Do not rehire. Multiple warnings documented.</textarea>
+        </div>
+        <div class="th-tech-actions">
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px" onclick="event.stopPropagation()">Save Notes</button>
+            <button class="th-btn th-btn-secondary" style="font-size:13px;padding:6px 14px;color:#ef4444;border-color:#fca5a5" onclick="event.stopPropagation()">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TERMINATION MODAL (click to preview) ===== -->
+<div style="margin-top:48px;padding-top:32px;border-top:2px solid #f3f4f6">
+    <div class="preview-badge">TERMINATION MODAL PREVIEW</div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:16px">This modal appears when you change a technician's status to "Terminated":</p>
+    <button class="th-btn th-btn-secondary" onclick="document.getElementById('terminate-modal').classList.toggle('active')" style="margin-bottom:24px">Show Termination Modal</button>
+</div>
+
+</div><!-- end tab-technicians -->
+
+<!-- ===== TAB PANEL: Metrics ===== -->
+<div class="tab-panel" id="tab-metrics">
+
+    <!-- Section A: Headcount by Function -->
+    <div class="metrics-section">
+        <div class="metrics-section-title">Headcount by Function</div>
+        <div class="metrics-cards">
+            <div class="metrics-card">
+                <div class="metrics-card-number" style="color:#2563eb">12</div>
+                <div class="metrics-card-label">Technicians</div>
+            </div>
+            <div class="metrics-card">
+                <div class="metrics-card-number" style="color:#7c3aed">4</div>
+                <div class="metrics-card-label">Pod Leaders</div>
+            </div>
+            <div class="metrics-card">
+                <div class="metrics-card-number" style="color:#059669">4</div>
+                <div class="metrics-card-label">Regional Managers</div>
+            </div>
+        </div>
+        <div class="metrics-total">Total Headcount: 20</div>
+    </div>
+
+    <!-- Section B: Retention Rates by Regional Manager -->
+    <div class="metrics-section">
+        <div class="metrics-section-title">Retention Rates by Regional Manager</div>
+        <div class="metrics-tables-row">
+            <div class="metrics-table-wrapper">
+                <div class="metrics-table-title">90-Day Retention</div>
+                <table class="metrics-table">
+                    <thead>
+                        <tr><th>Regional Manager</th><th>Rate</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Brandon</td><td class="rate-mid">85%</td></tr>
+                        <tr><td>Scott</td><td class="rate-good">92%</td></tr>
+                        <tr><td>Tyler</td><td class="rate-low">78%</td></tr>
+                        <tr><td>Aaron</td><td class="rate-mid">88%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="metrics-table-wrapper">
+                <div class="metrics-table-title">1-Year Retention</div>
+                <table class="metrics-table">
+                    <thead>
+                        <tr><th>Regional Manager</th><th>Rate</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Brandon</td><td class="rate-low">72%</td></tr>
+                        <tr><td>Scott</td><td class="rate-good">80%</td></tr>
+                        <tr><td>Tyler</td><td class="rate-low">65%</td></tr>
+                        <tr><td>Aaron</td><td class="rate-low">75%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section C: Attrition Rates (Last 12 Months) -->
+    <div class="metrics-section">
+        <div class="metrics-section-title">Attrition Rates (Last 12 Months)</div>
+        <div class="attrition-cards">
+            <div class="attrition-card attrition-quit">
+                <div class="attrition-card-number">60%</div>
+                <div class="attrition-card-label">Voluntary (Quit)</div>
+            </div>
+            <div class="attrition-card attrition-fired">
+                <div class="attrition-card-number">40%</div>
+                <div class="attrition-card-label">Involuntary (Fired)</div>
+            </div>
+        </div>
+        <div class="metrics-table-wrapper">
+            <div class="metrics-table-title">Attrition Breakdown</div>
+            <table class="metrics-table">
+                <thead>
+                    <tr><th>Technician</th><th>Type</th><th>Reason</th><th>Regional Manager</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ryan Patel</td>
+                        <td><span class="badge-quit">Quit</span></td>
+                        <td>Accepted position elsewhere</td>
+                        <td>Tyler</td>
+                    </tr>
+                    <tr>
+                        <td>Jake Rodriguez</td>
+                        <td><span class="badge-fired">Fired</span></td>
+                        <td>Repeated no-shows</td>
+                        <td>Aaron</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section D: Onboarding Completion -->
+    <div class="metrics-section">
+        <div class="metrics-section-title">Onboarding Completion</div>
+        <div class="metrics-table-wrapper">
+            <table class="metrics-table">
+                <thead>
+                    <tr><th>Technician</th><th>Regional Manager</th><th>Checklist</th><th>Onboarded</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Marcus Johnson</td>
+                        <td>Brandon</td>
+                        <td>0/5</td>
+                        <td>
+                            <div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:0%"></div></div>
+                            <span style="font-weight:600;color:var(--gray)">0%</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Sarah Lee</td>
+                        <td>Scott</td>
+                        <td>4/5</td>
+                        <td>
+                            <div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:80%"></div></div>
+                            <span style="font-weight:600;color:#d97706">80%</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>David Williams</td>
+                        <td>Brandon</td>
+                        <td>5/5</td>
+                        <td>
+                            <div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:100%"></div></div>
+                            <span style="font-weight:600;color:#10b981">100%</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- end tab-metrics -->
+
+<!-- Manage Checklist Template Modal -->
+<div class="th-template-overlay" id="template-modal">
+    <div class="th-template-box">
+        <h3>Manage Checklist Template</h3>
+        <p>These items will be added to every new technician by default. Changes don't affect existing technicians.</p>
+        <ul class="th-template-list" id="template-list">
+            <li class="th-template-item">
+                <span>Background check</span>
+                <button class="th-template-item-remove" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </li>
+            <li class="th-template-item">
+                <span>Reference check</span>
+                <button class="th-template-item-remove" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </li>
+            <li class="th-template-item">
+                <span>Offer letter sent</span>
+                <button class="th-template-item-remove" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </li>
+            <li class="th-template-item">
+                <span>W-4 form signed</span>
+                <button class="th-template-item-remove" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </li>
+            <li class="th-template-item">
+                <span>Equipment issued</span>
+                <button class="th-template-item-remove" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </li>
+        </ul>
+        <div class="th-template-add-row">
+            <input type="text" placeholder="New checklist item..." id="template-new-item">
+            <button class="th-btn th-btn-primary" onclick="var input=document.getElementById('template-new-item');if(input.value.trim()){var li=document.createElement('li');li.className='th-template-item';li.innerHTML='<span>'+input.value.trim()+'</span><button class=th-template-item-remove onclick=this.parentElement.remove()><svg viewBox=&quot;0 0 24 24&quot;><line x1=18 y1=6 x2=6 y2=18/><line x1=6 y1=6 x2=18 y2=18/></svg></button>';document.getElementById('template-list').appendChild(li);input.value='';input.focus()}">Add</button>
+        </div>
+        <div class="th-template-actions">
+            <button class="th-btn th-btn-secondary" onclick="document.getElementById('template-modal').classList.remove('active')">Cancel</button>
+            <button class="th-btn th-btn-primary" onclick="document.getElementById('template-modal').classList.remove('active')">Save Template</button>
+        </div>
+    </div>
+</div>
+
+<div class="th-terminate-overlay" id="terminate-modal">
+    <div class="th-terminate-box">
+        <h3>Terminate Technician</h3>
+        <p>Select termination type and optionally add a reason.</p>
+        <div class="th-form-group">
+            <label>Type</label>
+            <div class="th-terminate-type-btns">
+                <button class="th-terminate-type-btn active" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Quit</button>
+                <button class="th-terminate-type-btn" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Fired</button>
+            </div>
+        </div>
+        <div class="th-form-group">
+            <label>Reason (optional)</label>
+            <textarea placeholder="Enter reason for termination..."></textarea>
+        </div>
+        <div class="th-terminate-actions">
+            <button class="th-btn th-btn-secondary" onclick="document.getElementById('terminate-modal').classList.remove('active')">Cancel</button>
+            <button class="th-btn-danger" onclick="document.getElementById('terminate-modal').classList.remove('active')">Terminate</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+    // Remove active from all tabs and panels
+    document.querySelectorAll('.techhub-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+
+    // Activate clicked tab
+    var tabs = document.querySelectorAll('.techhub-tab');
+    var tabMap = { 'documents': 0, 'sops': 1, 'technicians': 2, 'metrics': 3 };
+    if (tabMap[tabName] !== undefined) {
+        tabs[tabMap[tabName]].classList.add('active');
+    }
+
+    // Activate corresponding panel
+    var panel = document.getElementById('tab-' + tabName);
+    if (panel) {
+        panel.classList.add('active');
+    }
+}
+</script>
+
+</body>
+</html>
