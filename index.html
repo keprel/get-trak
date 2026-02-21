@@ -3998,6 +3998,8 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
             terminationType: null,
             terminationReason: '',
             terminatedAt: null,
+            regionalManager: 'Brandon',
+            role: 'Technician',
             checklist: checklist,
             notes: initNotes,
             addedBy: thUser.email,
@@ -4141,9 +4143,10 @@ function loadTechnicians() {
             html += '<div class="th-assignment-row">';
             html += '<label>Regional Manager:</label>';
             html += '<select class="th-status-select" onchange="saveTechField(\'' + t._id + '\',\'regionalManager\',this.value)">';
+            if (!t.regionalManager) html += '<option value="" selected disabled>Select...</option>';
             var rmOptions = ['Brandon','Scott','Tyler','Aaron'];
             for (var ri = 0; ri < rmOptions.length; ri++) {
-                html += '<option' + ((t.regionalManager || '') === rmOptions[ri] ? ' selected' : '') + '>' + rmOptions[ri] + '</option>';
+                html += '<option' + (t.regionalManager === rmOptions[ri] ? ' selected' : '') + '>' + rmOptions[ri] + '</option>';
             }
             html += '</select></div>';
 
