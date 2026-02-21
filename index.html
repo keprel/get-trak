@@ -1491,10 +1491,10 @@
             stroke-linejoin: round;
         }
 
-        /* Onboarding Stats */
+        /* Technician Stats */
         .th-stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 24px;
         }
@@ -1517,8 +1517,10 @@
             color: var(--gray);
             margin-top: 2px;
         }
-        .th-stat-card.stat-onboarding .th-stat-number { color: #d97706; }
+        .th-stat-card.stat-interview .th-stat-number { color: #3b82f6; }
+        .th-stat-card.stat-hired .th-stat-number { color: #d97706; }
         .th-stat-card.stat-active .th-stat-number { color: #10b981; }
+        .th-stat-card.stat-terminated .th-stat-number { color: #ef4444; }
 
         /* Technician Cards */
         .th-tech-card {
@@ -1560,24 +1562,10 @@
             color: var(--dark);
             margin-bottom: 4px;
         }
-        .th-tech-progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #f3f4f6;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .th-tech-progress-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s ease;
-            background: var(--red);
-        }
-        .th-tech-progress-fill.complete { background: #10b981; }
-        .th-tech-progress-text {
-            font-size: 11px;
-            color: #9ca3af;
-            margin-top: 3px;
+        .th-tech-position {
+            font-size: 12px;
+            color: var(--gray);
+            margin-top: 1px;
         }
         .th-tech-status {
             padding: 4px 10px;
@@ -1586,9 +1574,10 @@
             font-weight: 600;
             flex-shrink: 0;
         }
-        .th-tech-status-onboarding { background: #fffbeb; color: #d97706; }
+        .th-tech-status-interview { background: #eff6ff; color: #3b82f6; }
+        .th-tech-status-hired { background: #fffbeb; color: #d97706; }
         .th-tech-status-active { background: #ecfdf5; color: #10b981; }
-        .th-tech-status-inactive { background: #f3f4f6; color: var(--gray); }
+        .th-tech-status-terminated { background: #fef2f2; color: #ef4444; }
         .th-tech-chevron {
             width: 20px;
             height: 20px;
@@ -1609,17 +1598,30 @@
             border-top: 1px solid #f3f4f6;
         }
         .th-tech-card.expanded .th-tech-detail { display: block; }
-        .th-checklist { list-style: none; padding: 16px 0 0; margin: 0; }
+        /* Status select in expanded card */
+        .th-status-select {
+            padding: 6px 10px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        .th-status-select:focus { border-color: var(--red); }
+
+        /* Editable Checklist */
+        .th-checklist { list-style: none; padding: 0; margin: 16px 0 0; }
         .th-checklist-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 0;
+            gap: 10px;
+            padding: 8px 0;
             border-bottom: 1px solid #f9fafb;
-            cursor: pointer;
-            transition: background 0.15s;
         }
-        .th-checklist-item:hover { background: #f9fafb; margin: 0 -8px; padding: 10px 8px; border-radius: 6px; }
         .th-checklist-item:last-child { border-bottom: none; }
         .th-checkbox {
             width: 20px;
@@ -1631,7 +1633,9 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            cursor: pointer;
         }
+        .th-checkbox:hover { border-color: #9ca3af; }
         .th-checkbox.checked {
             background: #10b981;
             border-color: #10b981;
@@ -1649,14 +1653,296 @@
             font-size: 14px;
             color: var(--dark);
             flex: 1;
+            cursor: pointer;
         }
         .th-checklist-item.done .th-checklist-label {
             color: #9ca3af;
             text-decoration: line-through;
         }
-        .th-checklist-date {
-            font-size: 11px;
-            color: #9ca3af;
+        .th-checklist-remove {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: none;
+            color: #d1d5db;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        .th-checklist-remove:hover { color: #ef4444; background: #fef2f2; }
+        .th-checklist-add {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .th-checklist-add input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+        }
+        .th-checklist-add input:focus { border-color: var(--red); }
+        .th-checklist-add button {
+            padding: 6px 12px;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .th-checklist-add button:hover { background: #333; }
+
+        /* Termination info block */
+        .th-termination-info {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #991b1b;
+        }
+        .th-termination-info strong { font-weight: 700; }
+
+        /* Termination modal */
+        .th-terminate-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+        }
+        .th-terminate-overlay.active { display: flex; }
+        .th-terminate-box {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 440px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .th-terminate-box h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--dark);
+        }
+        .th-terminate-type-btns {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .th-terminate-type-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .th-terminate-type-btn:hover { border-color: #9ca3af; }
+        .th-terminate-type-btn.active { border-color: #ef4444; background: #fef2f2; color: #ef4444; }
+        .th-terminate-box textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 16px;
+        }
+        .th-terminate-box textarea:focus { border-color: var(--red); }
+        .th-terminate-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* Per-tech documents */
+        .th-tech-docs {
+            margin-top: 16px;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 16px;
+        }
+        .th-tech-docs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .th-tech-docs-header h5 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        .th-tech-doc-upload-zone {
+            border: 2px dashed #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+        .th-tech-doc-upload-zone:hover { border-color: var(--red); color: var(--dark); }
+        .th-tech-doc-list { display: flex; flex-direction: column; gap: 6px; }
+        .th-tech-doc-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .th-tech-doc-item svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--gray);
+            fill: none;
+            stroke-width: 2;
+            flex-shrink: 0;
+        }
+        .th-tech-doc-item span { flex: 1; color: var(--dark); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .th-tech-doc-item small { color: #9ca3af; flex-shrink: 0; }
+        .th-tech-doc-item a {
+            color: var(--red);
+            font-weight: 600;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+        .th-tech-doc-item button {
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .th-tech-doc-item button:hover { color: #ef4444; background: #fef2f2; }
+        .th-tech-doc-progress {
+            height: 4px;
+            background: #f3f4f6;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .th-tech-doc-progress div {
+            height: 100%;
+            background: var(--red);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        /* Template editor modal */
+        .th-template-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+        }
+        .th-template-overlay.active { display: flex; }
+        .th-template-box {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .th-template-box h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        .th-template-box > p {
+            font-size: 13px;
+            color: var(--gray);
+            margin-bottom: 16px;
+            line-height: 1.5;
+            max-width: none;
+            text-align: left;
+        }
+        .th-template-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .th-template-item span { flex: 1; font-size: 14px; color: var(--dark); }
+        .th-template-item button {
+            background: none;
+            border: none;
+            color: #d1d5db;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .th-template-item button:hover { color: #ef4444; background: #fef2f2; }
+        .th-template-add {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            margin-bottom: 20px;
+        }
+        .th-template-add input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+        }
+        .th-template-add input:focus { border-color: var(--red); }
+        .th-template-add button {
+            padding: 8px 16px;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .th-template-add button:hover { background: #333; }
+        .th-template-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
         }
         .th-tech-notes {
             margin-top: 16px;
@@ -1764,7 +2050,7 @@
             .techhub-header-right { width: 100%; justify-content: flex-end; }
             .techhub-content { padding: 24px 16px; }
             .techhub-tabs { overflow-x: auto; }
-            .th-stats { grid-template-columns: 1fr; }
+            .th-stats { grid-template-columns: repeat(2, 1fr); }
             .th-card { flex-wrap: wrap; }
             .th-card-actions { width: 100%; justify-content: flex-end; }
             .th-tech-summary { flex-wrap: wrap; }
@@ -2018,7 +2304,7 @@
         <div class="techhub-tabs">
             <button class="techhub-tab active" data-tab="documents">Documents</button>
             <button class="techhub-tab" data-tab="sops">SOPs</button>
-            <button class="techhub-tab" data-tab="onboarding">Onboarding</button>
+            <button class="techhub-tab" data-tab="technicians">Technicians</button>
         </div>
 
         <!-- Documents Panel -->
@@ -2118,11 +2404,22 @@
             </div>
         </div>
 
-        <!-- Onboarding Panel -->
-        <div class="techhub-panel" id="panel-onboarding">
-            <div class="th-stats" id="th-onboarding-stats"></div>
-            <div style="margin-bottom:24px">
+        <!-- Technicians Panel -->
+        <div class="techhub-panel" id="panel-technicians">
+            <div class="th-stats" id="th-tech-stats"></div>
+            <div class="th-filter-bar" id="th-tech-filter-bar" style="margin-bottom:16px">
+                <button class="th-filter-chip active" data-filter="all">All</button>
+                <button class="th-filter-chip" data-filter="interview">Interview</button>
+                <button class="th-filter-chip" data-filter="hired">Hired</button>
+                <button class="th-filter-chip" data-filter="active">Active</button>
+                <button class="th-filter-chip" data-filter="terminated">Terminated</button>
+            </div>
+            <div style="margin-bottom:24px;display:flex;gap:10px;flex-wrap:wrap">
                 <button class="th-btn th-btn-primary" id="th-add-tech-btn">Add Technician</button>
+                <button class="th-btn th-btn-secondary" id="th-manage-checklist-btn" title="Manage Checklist Template" style="display:flex;align-items:center;gap:6px">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Manage Checklist
+                </button>
             </div>
             <div class="th-upload-form" id="th-add-tech-form" style="display:none">
                 <h3>Add Technician</h3>
@@ -2139,8 +2436,16 @@
                     <input type="tel" id="th-tech-phone" placeholder="(555) 123-4567">
                 </div>
                 <div class="th-form-group">
-                    <label>Start Date</label>
-                    <input type="date" id="th-tech-start-date">
+                    <label>Position</label>
+                    <input type="text" id="th-tech-position" placeholder="e.g. ADAS Calibration Technician">
+                </div>
+                <div class="th-form-group">
+                    <label>Interview Date</label>
+                    <input type="date" id="th-tech-interview-date">
+                </div>
+                <div class="th-form-group">
+                    <label>Notes (optional)</label>
+                    <textarea id="th-tech-init-notes" placeholder="Any initial notes about this candidate..."></textarea>
                 </div>
                 <div class="th-form-actions">
                     <button class="th-btn th-btn-primary" id="th-tech-save-btn">Add Technician</button>
@@ -2160,6 +2465,41 @@
         <div class="th-confirm-actions">
             <button class="th-btn-danger" id="th-confirm-yes">Delete</button>
             <button class="th-btn th-btn-secondary" id="th-confirm-no">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Termination Modal -->
+<div class="th-terminate-overlay" id="th-terminate-overlay">
+    <div class="th-terminate-box">
+        <h3>Terminate Technician</h3>
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--dark);margin-bottom:8px">Type</label>
+        <div class="th-terminate-type-btns">
+            <button class="th-terminate-type-btn active" data-type="quit">Quit</button>
+            <button class="th-terminate-type-btn" data-type="fired">Fired</button>
+        </div>
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--dark);margin-bottom:6px">Reason (optional)</label>
+        <textarea id="th-terminate-reason" placeholder="Provide a reason for termination..."></textarea>
+        <div class="th-terminate-actions">
+            <button class="th-btn-danger" id="th-terminate-confirm">Confirm Termination</button>
+            <button class="th-btn th-btn-secondary" id="th-terminate-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Checklist Template Modal -->
+<div class="th-template-overlay" id="th-template-overlay">
+    <div class="th-template-box">
+        <h3>Manage Checklist Template</h3>
+        <p>These items will be added to every new technician's checklist. Changes only affect future technicians.</p>
+        <div id="th-template-items"></div>
+        <div class="th-template-add">
+            <input type="text" id="th-template-new-item" placeholder="New checklist item...">
+            <button id="th-template-add-btn">Add</button>
+        </div>
+        <div class="th-template-actions">
+            <button class="th-btn th-btn-primary" id="th-template-save-btn">Save Template</button>
+            <button class="th-btn th-btn-secondary" id="th-template-close-btn">Close</button>
         </div>
     </div>
 </div>
@@ -3116,7 +3456,7 @@ for (var i = 0; i < tabButtons.length; i++) {
         }
         document.getElementById('panel-documents').classList.toggle('active', tab === 'documents');
         document.getElementById('panel-sops').classList.toggle('active', tab === 'sops');
-        document.getElementById('panel-onboarding').classList.toggle('active', tab === 'onboarding');
+        document.getElementById('panel-technicians').classList.toggle('active', tab === 'technicians');
         loadActiveTabData();
     });
 }
@@ -3124,7 +3464,7 @@ for (var i = 0; i < tabButtons.length; i++) {
 function loadActiveTabData() {
     if (thActiveTab === 'documents') loadDocuments();
     else if (thActiveTab === 'sops') loadSops();
-    else if (thActiveTab === 'onboarding') loadTechnicians();
+    else if (thActiveTab === 'technicians') loadTechnicians();
 }
 
 // === HTML Escaping ===
@@ -3530,20 +3870,41 @@ function deleteSop(sopId, storagePath) {
 }
 
 // ============================================================
-// === ONBOARDING ===
+// === TECHNICIAN MANAGEMENT ===
 // ============================================================
 
-var CHECKLIST_ITEMS = [
-    { key: 'safety-training', label: 'Safety Training Complete' },
-    { key: 'equipment-orientation', label: 'Equipment Orientation' },
-    { key: 'first-ride-along', label: 'First Ride-Along' },
-    { key: 'solo-static-cal', label: 'Solo Static Calibration' },
-    { key: 'solo-dynamic-cal', label: 'Solo Dynamic Calibration' },
-    { key: 'customer-interaction', label: 'Customer Interaction Training' },
-    { key: 'documentation-review', label: 'Documentation & Reporting Review' },
-    { key: 'final-signoff', label: 'Final Manager Sign-Off' }
-];
+var thTechFilter = 'all';
+var thTerminateCallback = null;
+var thChecklistTemplate = null; // cached template
 
+// --- Checklist Template ---
+function loadChecklistTemplate() {
+    return db.collection('settings').doc('checklist-template').get().then(function(doc) {
+        if (doc.exists && doc.data().items) {
+            thChecklistTemplate = doc.data().items;
+        } else {
+            thChecklistTemplate = [];
+        }
+        return thChecklistTemplate;
+    }).catch(function() {
+        thChecklistTemplate = [];
+        return thChecklistTemplate;
+    });
+}
+
+// --- Filter Chips ---
+var techFilterChips = document.querySelectorAll('#th-tech-filter-bar .th-filter-chip');
+for (var fi = 0; fi < techFilterChips.length; fi++) {
+    techFilterChips[fi].addEventListener('click', function() {
+        thTechFilter = this.getAttribute('data-filter');
+        for (var fj = 0; fj < techFilterChips.length; fj++) {
+            techFilterChips[fj].classList.toggle('active', techFilterChips[fj].getAttribute('data-filter') === thTechFilter);
+        }
+        loadTechnicians();
+    });
+}
+
+// --- Add Technician ---
 document.getElementById('th-add-tech-btn').addEventListener('click', function() {
     document.getElementById('th-add-tech-form').style.display = 'block';
     this.style.display = 'none';
@@ -3556,7 +3917,9 @@ document.getElementById('th-tech-cancel-btn').addEventListener('click', function
     document.getElementById('th-tech-name').value = '';
     document.getElementById('th-tech-email').value = '';
     document.getElementById('th-tech-phone').value = '';
-    document.getElementById('th-tech-start-date').value = '';
+    document.getElementById('th-tech-position').value = '';
+    document.getElementById('th-tech-interview-date').value = '';
+    document.getElementById('th-tech-init-notes').value = '';
 });
 
 document.getElementById('th-tech-save-btn').addEventListener('click', function() {
@@ -3564,26 +3927,35 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
     if (!name) { showToast('Please enter a name'); return; }
     var email = document.getElementById('th-tech-email').value.trim();
     var phone = document.getElementById('th-tech-phone').value.trim();
-    var startDate = document.getElementById('th-tech-start-date').value;
+    var position = document.getElementById('th-tech-position').value.trim();
+    var interviewDate = document.getElementById('th-tech-interview-date').value;
+    var initNotes = document.getElementById('th-tech-init-notes').value.trim();
     var btn = this;
     btn.disabled = true;
     btn.textContent = 'Adding...';
 
-    var checklist = {};
-    for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
-        checklist[CHECKLIST_ITEMS[i].key] = { completed: false, completedAt: null };
-    }
-
-    db.collection('technicians').add({
-        name: name,
-        email: email,
-        phone: phone,
-        startDate: startDate,
-        status: 'onboarding',
-        checklist: checklist,
-        notes: '',
-        addedBy: thUser.email,
-        addedAt: firebase.firestore.FieldValue.serverTimestamp()
+    // Fetch template to build initial checklist
+    var templatePromise = thChecklistTemplate !== null ? Promise.resolve(thChecklistTemplate) : loadChecklistTemplate();
+    templatePromise.then(function(templateItems) {
+        var checklist = [];
+        for (var i = 0; i < templateItems.length; i++) {
+            checklist.push({ label: templateItems[i], completed: false });
+        }
+        return db.collection('technicians').add({
+            name: name,
+            email: email,
+            phone: phone,
+            position: position,
+            interviewDate: interviewDate,
+            status: 'interview',
+            terminationType: null,
+            terminationReason: '',
+            terminatedAt: null,
+            checklist: checklist,
+            notes: initNotes,
+            addedBy: thUser.email,
+            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
     }).then(function() {
         showToast('Technician added');
         document.getElementById('th-add-tech-form').style.display = 'none';
@@ -3591,7 +3963,9 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
         document.getElementById('th-tech-name').value = '';
         document.getElementById('th-tech-email').value = '';
         document.getElementById('th-tech-phone').value = '';
-        document.getElementById('th-tech-start-date').value = '';
+        document.getElementById('th-tech-position').value = '';
+        document.getElementById('th-tech-interview-date').value = '';
+        document.getElementById('th-tech-init-notes').value = '';
         btn.disabled = false;
         btn.textContent = 'Add Technician';
         loadTechnicians();
@@ -3602,80 +3976,156 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
     });
 });
 
+// --- Normalize legacy statuses ---
+function normalizeTechStatus(status) {
+    if (status === 'onboarding') return 'hired';
+    if (status === 'inactive') return 'terminated';
+    return status || 'interview';
+}
+function techStatusLabel(status) {
+    if (status === 'interview') return 'Interview';
+    if (status === 'hired') return 'Hired';
+    if (status === 'active') return 'Active';
+    if (status === 'terminated') return 'Terminated';
+    return status;
+}
+function techStatusClass(status) {
+    return 'th-tech-status-' + status;
+}
+
+// --- Load Technicians ---
 function loadTechnicians() {
-    var statsEl = document.getElementById('th-onboarding-stats');
+    var statsEl = document.getElementById('th-tech-stats');
     var listEl = document.getElementById('th-tech-list');
     listEl.innerHTML = '<div class="th-loading"><div class="th-spinner"></div><p style="font-size:13px;color:var(--gray);animation:none;max-width:none">Loading technicians...</p></div>';
 
     db.collection('technicians').orderBy('addedAt', 'desc').get().then(function(snap) {
-        var total = 0, onboarding = 0, active = 0;
+        var counts = { interview: 0, hired: 0, active: 0, terminated: 0 };
         var techs = [];
         snap.forEach(function(doc) {
             var d = doc.data();
             d._id = doc.id;
+            d.status = normalizeTechStatus(d.status);
+            // Normalize old map-based checklist to array
+            if (d.checklist && !Array.isArray(d.checklist)) {
+                var arr = [];
+                var keys = Object.keys(d.checklist);
+                for (var k = 0; k < keys.length; k++) {
+                    arr.push({ label: keys[k].replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); }), completed: !!d.checklist[keys[k]].completed });
+                }
+                d.checklist = arr;
+            }
+            if (!d.checklist) d.checklist = [];
             techs.push(d);
-            total++;
-            if (d.status === 'onboarding') onboarding++;
-            else if (d.status === 'active') active++;
+            if (counts.hasOwnProperty(d.status)) counts[d.status]++;
         });
 
         // Stats
+        var total = techs.length;
         statsEl.innerHTML =
-            '<div class="th-stat-card"><div class="th-stat-number">' + total + '</div><div class="th-stat-label">Total Technicians</div></div>' +
-            '<div class="th-stat-card stat-onboarding"><div class="th-stat-number">' + onboarding + '</div><div class="th-stat-label">Onboarding</div></div>' +
-            '<div class="th-stat-card stat-active"><div class="th-stat-number">' + active + '</div><div class="th-stat-label">Active</div></div>';
+            '<div class="th-stat-card"><div class="th-stat-number">' + total + '</div><div class="th-stat-label">Total</div></div>' +
+            '<div class="th-stat-card stat-interview"><div class="th-stat-number">' + counts.interview + '</div><div class="th-stat-label">Interview</div></div>' +
+            '<div class="th-stat-card stat-hired"><div class="th-stat-number">' + counts.hired + '</div><div class="th-stat-label">Hired</div></div>' +
+            '<div class="th-stat-card stat-active"><div class="th-stat-number">' + counts.active + '</div><div class="th-stat-label">Active</div></div>';
 
-        if (techs.length === 0) {
-            listEl.innerHTML = '<div class="th-empty"><h3>No technicians yet</h3><p>Add your first technician to start tracking onboarding.</p></div>';
+        // Filter
+        var filtered = [];
+        for (var fi = 0; fi < techs.length; fi++) {
+            if (thTechFilter === 'all' || techs[fi].status === thTechFilter) filtered.push(techs[fi]);
+        }
+
+        if (filtered.length === 0) {
+            var msg = techs.length === 0 ? 'Add your first technician to get started.' : 'No technicians match this filter.';
+            listEl.innerHTML = '<div class="th-empty"><h3>No technicians</h3><p>' + msg + '</p></div>';
             return;
         }
 
         var html = '';
-        for (var i = 0; i < techs.length; i++) {
-            var t = techs[i];
-            var checklist = t.checklist || {};
+        for (var i = 0; i < filtered.length; i++) {
+            var t = filtered[i];
+            var checklist = t.checklist;
             var done = 0;
-            for (var ci = 0; ci < CHECKLIST_ITEMS.length; ci++) {
-                if (checklist[CHECKLIST_ITEMS[ci].key] && checklist[CHECKLIST_ITEMS[ci].key].completed) done++;
+            for (var ci = 0; ci < checklist.length; ci++) {
+                if (checklist[ci].completed) done++;
             }
-            var pct = Math.round((done / CHECKLIST_ITEMS.length) * 100);
             var initials = t.name.split(' ').map(function(w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
-            var statusClass = t.status === 'active' ? 'th-tech-status-active' : t.status === 'onboarding' ? 'th-tech-status-onboarding' : 'th-tech-status-inactive';
-            var statusLabel = t.status === 'active' ? 'Active' : t.status === 'onboarding' ? 'Onboarding' : 'Inactive';
+            var sClass = techStatusClass(t.status);
+            var sLabel = techStatusLabel(t.status);
 
             html += '<div class="th-tech-card" id="tech-card-' + t._id + '">';
             html += '<div class="th-tech-summary" onclick="toggleTechCard(\'' + t._id + '\')">';
             html += '<div class="th-tech-avatar">' + thEscape(initials) + '</div>';
             html += '<div class="th-tech-info">';
             html += '<h4>' + thEscape(t.name) + '</h4>';
-            html += '<div class="th-tech-progress-bar"><div class="th-tech-progress-fill' + (pct === 100 ? ' complete' : '') + '" style="width:' + pct + '%"></div></div>';
-            html += '<div class="th-tech-progress-text">' + done + '/' + CHECKLIST_ITEMS.length + ' tasks complete</div>';
+            if (t.position) html += '<div class="th-tech-position">' + thEscape(t.position) + '</div>';
             html += '</div>';
-            html += '<span class="th-tech-status ' + statusClass + '">' + statusLabel + '</span>';
+            html += '<span class="th-tech-status ' + sClass + '">' + sLabel + '</span>';
             html += '<svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
             html += '</div>';
 
             // Expanded detail
             html += '<div class="th-tech-detail">';
-            if (t.email || t.phone || t.startDate) {
+
+            // Contact info
+            if (t.email || t.phone || t.interviewDate || t.startDate) {
                 html += '<div style="font-size:13px;color:var(--gray);padding-top:12px;display:flex;gap:16px;flex-wrap:wrap">';
                 if (t.email) html += '<span>' + thEscape(t.email) + '</span>';
                 if (t.phone) html += '<span>' + thEscape(t.phone) + '</span>';
-                if (t.startDate) html += '<span>Started ' + thEscape(t.startDate) + '</span>';
+                if (t.interviewDate) html += '<span>Interview: ' + thEscape(t.interviewDate) + '</span>';
+                else if (t.startDate) html += '<span>Started: ' + thEscape(t.startDate) + '</span>';
                 html += '</div>';
             }
+
+            // Status dropdown
+            html += '<div style="margin-top:12px;display:flex;align-items:center;gap:10px">';
+            html += '<label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>';
+            html += '<select class="th-status-select" onchange="changeTechStatus(\'' + t._id + '\',this.value,this)">';
+            var statuses = ['interview','hired','active','terminated'];
+            var statusLabels = ['Interview','Hired','Active','Terminated'];
+            for (var si = 0; si < statuses.length; si++) {
+                html += '<option value="' + statuses[si] + '"' + (t.status === statuses[si] ? ' selected' : '') + '>' + statusLabels[si] + '</option>';
+            }
+            html += '</select>';
+            html += '</div>';
+
+            // Termination info
+            if (t.status === 'terminated') {
+                html += '<div class="th-termination-info">';
+                html += '<strong>' + (t.terminationType === 'fired' ? 'Fired' : 'Quit') + '</strong>';
+                if (t.terminationReason) html += ' &mdash; ' + thEscape(t.terminationReason);
+                if (t.terminatedAt) html += '<br><small>' + thFormatDate(t.terminatedAt) + '</small>';
+                html += '</div>';
+            }
+
+            // Checklist section
+            html += '<div style="margin-top:16px;border-top:1px solid #f3f4f6;padding-top:16px">';
+            html += '<label style="font-size:13px;font-weight:700;color:var(--dark)">Checklist (' + done + '/' + checklist.length + ')</label>';
             html += '<ul class="th-checklist">';
-            for (var ci = 0; ci < CHECKLIST_ITEMS.length; ci++) {
-                var item = CHECKLIST_ITEMS[ci];
-                var checked = checklist[item.key] && checklist[item.key].completed;
-                var completedAt = checked && checklist[item.key].completedAt ? thFormatDate(checklist[item.key].completedAt) : '';
-                html += '<li class="th-checklist-item' + (checked ? ' done' : '') + '" onclick="toggleChecklist(\'' + t._id + '\',\'' + item.key + '\',' + (checked ? 'false' : 'true') + ')">';
-                html += '<div class="th-checkbox' + (checked ? ' checked' : '') + '">' + (checked ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</div>';
-                html += '<span class="th-checklist-label">' + thEscape(item.label) + '</span>';
-                if (completedAt) html += '<span class="th-checklist-date">' + completedAt + '</span>';
+            for (var ci = 0; ci < checklist.length; ci++) {
+                var item = checklist[ci];
+                html += '<li class="th-checklist-item' + (item.completed ? ' done' : '') + '">';
+                html += '<div class="th-checkbox' + (item.completed ? ' checked' : '') + '" onclick="toggleChecklistItem(\'' + t._id + '\',' + ci + ')">' + (item.completed ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</div>';
+                html += '<span class="th-checklist-label" onclick="toggleChecklistItem(\'' + t._id + '\',' + ci + ')">' + thEscape(item.label) + '</span>';
+                html += '<button class="th-checklist-remove" onclick="removeChecklistItem(\'' + t._id + '\',' + ci + ')" title="Remove item">&times;</button>';
                 html += '</li>';
             }
             html += '</ul>';
+            html += '<div class="th-checklist-add">';
+            html += '<input type="text" id="checklist-add-' + t._id + '" placeholder="Add checklist item...">';
+            html += '<button onclick="addChecklistItem(\'' + t._id + '\')">Add</button>';
+            html += '</div>';
+            html += '</div>';
+
+            // Per-tech documents
+            html += '<div class="th-tech-docs">';
+            html += '<div class="th-tech-docs-header">';
+            html += '<h5>Documents</h5>';
+            html += '<button class="th-btn th-btn-secondary" onclick="triggerTechDocUpload(\'' + t._id + '\')" style="font-size:12px;padding:4px 10px">Upload</button>';
+            html += '</div>';
+            html += '<input type="file" id="tech-doc-input-' + t._id + '" style="display:none" onchange="handleTechDocFile(\'' + t._id + '\',this)">';
+            html += '<div id="tech-doc-progress-' + t._id + '"></div>';
+            html += '<div class="th-tech-doc-list" id="tech-docs-' + t._id + '"><div style="font-size:12px;color:#9ca3af">Loading documents...</div></div>';
+            html += '</div>';
 
             // Notes
             html += '<div class="th-tech-notes">';
@@ -3689,6 +4139,11 @@ function loadTechnicians() {
             html += '</div></div>';
         }
         listEl.innerHTML = html;
+
+        // Load docs for each visible tech
+        for (var di = 0; di < filtered.length; di++) {
+            loadTechDocuments(filtered[di]._id);
+        }
     }).catch(function(err) {
         listEl.innerHTML = '<div class="th-empty"><h3>Error loading technicians</h3><p>' + thEscape(err.message) + '</p></div>';
     });
@@ -3699,27 +4154,97 @@ function toggleTechCard(id) {
     if (card) card.classList.toggle('expanded');
 }
 
-function toggleChecklist(techId, key, newValue) {
-    var update = {};
-    update['checklist.' + key + '.completed'] = newValue;
-    update['checklist.' + key + '.completedAt'] = newValue ? firebase.firestore.FieldValue.serverTimestamp() : null;
-    db.collection('technicians').doc(techId).update(update).then(function() {
-        // Check if all items are complete to auto-set status
-        return db.collection('technicians').doc(techId).get();
-    }).then(function(doc) {
-        var d = doc.data();
-        var checklist = d.checklist || {};
-        var allDone = true;
-        for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
-            if (!checklist[CHECKLIST_ITEMS[i].key] || !checklist[CHECKLIST_ITEMS[i].key].completed) {
-                allDone = false;
-                break;
+// --- Status Change ---
+function changeTechStatus(techId, newStatus, selectEl) {
+    if (newStatus === 'terminated') {
+        openTerminateDialog(techId, selectEl);
+        return;
+    }
+    db.collection('technicians').doc(techId).update({
+        status: newStatus,
+        terminationType: null,
+        terminationReason: '',
+        terminatedAt: null
+    }).then(function() {
+        showToast('Status updated');
+        loadTechnicians();
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+    });
+}
+
+// --- Termination Flow ---
+function openTerminateDialog(techId, selectEl) {
+    var overlay = document.getElementById('th-terminate-overlay');
+    overlay.classList.add('active');
+    document.getElementById('th-terminate-reason').value = '';
+    // Reset type buttons to Quit
+    var typeBtns = overlay.querySelectorAll('.th-terminate-type-btn');
+    for (var i = 0; i < typeBtns.length; i++) {
+        typeBtns[i].classList.toggle('active', typeBtns[i].getAttribute('data-type') === 'quit');
+    }
+    thTerminateCallback = function(type, reason) {
+        db.collection('technicians').doc(techId).update({
+            status: 'terminated',
+            terminationType: type,
+            terminationReason: reason,
+            terminatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function() {
+            showToast('Technician terminated');
+            loadTechnicians();
+        }).catch(function(err) {
+            showToast('Error: ' + err.message);
+        });
+    };
+    // If cancelled, revert the dropdown
+    overlay._revertSelect = selectEl;
+    overlay._revertTechId = techId;
+}
+
+// Termination type toggle buttons
+var termTypeBtns = document.querySelectorAll('.th-terminate-type-btn');
+for (var ti = 0; ti < termTypeBtns.length; ti++) {
+    termTypeBtns[ti].addEventListener('click', function() {
+        for (var tj = 0; tj < termTypeBtns.length; tj++) {
+            termTypeBtns[tj].classList.remove('active');
+        }
+        this.classList.add('active');
+    });
+}
+
+document.getElementById('th-terminate-confirm').addEventListener('click', function() {
+    var overlay = document.getElementById('th-terminate-overlay');
+    var activeBtn = overlay.querySelector('.th-terminate-type-btn.active');
+    var type = activeBtn ? activeBtn.getAttribute('data-type') : 'quit';
+    var reason = document.getElementById('th-terminate-reason').value.trim();
+    overlay.classList.remove('active');
+    if (thTerminateCallback) thTerminateCallback(type, reason);
+    thTerminateCallback = null;
+});
+
+document.getElementById('th-terminate-cancel').addEventListener('click', function() {
+    var overlay = document.getElementById('th-terminate-overlay');
+    overlay.classList.remove('active');
+    thTerminateCallback = null;
+    // Revert select to previous value
+    if (overlay._revertTechId) {
+        db.collection('technicians').doc(overlay._revertTechId).get().then(function(doc) {
+            if (doc.exists) {
+                var sel = overlay._revertSelect;
+                if (sel) sel.value = normalizeTechStatus(doc.data().status);
             }
-        }
-        var newStatus = allDone ? 'active' : 'onboarding';
-        if (d.status !== newStatus && d.status !== 'inactive') {
-            return db.collection('technicians').doc(techId).update({ status: newStatus });
-        }
+        });
+    }
+});
+
+// --- Checklist Item Toggle ---
+function toggleChecklistItem(techId, index) {
+    db.collection('technicians').doc(techId).get().then(function(doc) {
+        var d = doc.data();
+        var checklist = d.checklist || [];
+        if (!Array.isArray(checklist) || index >= checklist.length) return;
+        checklist[index].completed = !checklist[index].completed;
+        return db.collection('technicians').doc(techId).update({ checklist: checklist });
     }).then(function() {
         loadTechnicians();
     }).catch(function(err) {
@@ -3727,6 +4252,136 @@ function toggleChecklist(techId, key, newValue) {
     });
 }
 
+// --- Add Checklist Item ---
+function addChecklistItem(techId) {
+    var input = document.getElementById('checklist-add-' + techId);
+    if (!input) return;
+    var label = input.value.trim();
+    if (!label) { showToast('Please enter an item name'); return; }
+    db.collection('technicians').doc(techId).get().then(function(doc) {
+        var d = doc.data();
+        var checklist = d.checklist || [];
+        if (!Array.isArray(checklist)) checklist = [];
+        checklist.push({ label: label, completed: false });
+        return db.collection('technicians').doc(techId).update({ checklist: checklist });
+    }).then(function() {
+        showToast('Item added');
+        loadTechnicians();
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+    });
+}
+
+// --- Remove Checklist Item ---
+function removeChecklistItem(techId, index) {
+    showConfirm('Remove Checklist Item', 'This item will be removed from this technician\'s checklist.', function() {
+        db.collection('technicians').doc(techId).get().then(function(doc) {
+            var d = doc.data();
+            var checklist = d.checklist || [];
+            if (!Array.isArray(checklist) || index >= checklist.length) return;
+            checklist.splice(index, 1);
+            return db.collection('technicians').doc(techId).update({ checklist: checklist });
+        }).then(function() {
+            showToast('Item removed');
+            loadTechnicians();
+        }).catch(function(err) {
+            showToast('Error: ' + err.message);
+        });
+    });
+}
+
+// --- Per-Tech Document Upload ---
+function triggerTechDocUpload(techId) {
+    var input = document.getElementById('tech-doc-input-' + techId);
+    if (input) input.click();
+}
+
+function handleTechDocFile(techId, input) {
+    var file = input.files[0];
+    if (!file) return;
+    var progressEl = document.getElementById('tech-doc-progress-' + techId);
+    progressEl.innerHTML = '<div class="th-tech-doc-progress"><div style="width:0%"></div></div>';
+    var timestamp = Date.now();
+    var storagePath = 'techhub/technicians/' + techId + '/' + timestamp + '_' + file.name;
+    var ref = firebase.storage().ref(storagePath);
+    var task = ref.put(file);
+    task.on('state_changed', function(snapshot) {
+        var pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        var bar = progressEl.querySelector('div div');
+        if (bar) bar.style.width = pct + '%';
+    }, function(err) {
+        showToast('Upload error: ' + err.message);
+        progressEl.innerHTML = '';
+        input.value = '';
+    }, function() {
+        task.snapshot.ref.getDownloadURL().then(function(url) {
+            return db.collection('technicians').doc(techId).collection('documents').add({
+                name: file.name,
+                fileUrl: url,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                storagePath: storagePath,
+                uploadedBy: thUser.email,
+                uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }).then(function() {
+            showToast('Document uploaded');
+            progressEl.innerHTML = '';
+            input.value = '';
+            loadTechDocuments(techId);
+        }).catch(function(err) {
+            showToast('Error: ' + err.message);
+            progressEl.innerHTML = '';
+            input.value = '';
+        });
+    });
+}
+
+function loadTechDocuments(techId) {
+    var listEl = document.getElementById('tech-docs-' + techId);
+    if (!listEl) return;
+    db.collection('technicians').doc(techId).collection('documents').orderBy('uploadedAt', 'desc').get().then(function(snap) {
+        if (snap.empty) {
+            listEl.innerHTML = '<div style="font-size:12px;color:#9ca3af;padding:4px 0">No documents uploaded yet.</div>';
+            return;
+        }
+        var html = '';
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            var size = d.fileSize ? (d.fileSize < 1024 * 1024 ? Math.round(d.fileSize / 1024) + ' KB' : (d.fileSize / (1024 * 1024)).toFixed(1) + ' MB') : '';
+            html += '<div class="th-tech-doc-item">';
+            html += '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+            html += '<span title="' + thEscape(d.fileName) + '">' + thEscape(d.fileName) + '</span>';
+            if (size) html += '<small>' + size + '</small>';
+            html += '<a href="' + thEscape(d.fileUrl) + '" target="_blank" rel="noopener">View</a>';
+            html += '<button onclick="deleteTechDocument(\'' + techId + '\',\'' + doc.id + '\',\'' + thEscape(d.storagePath) + '\')" title="Delete">&times;</button>';
+            html += '</div>';
+        });
+        listEl.innerHTML = html;
+    }).catch(function(err) {
+        listEl.innerHTML = '<div style="font-size:12px;color:#ef4444">Error loading documents</div>';
+    });
+}
+
+function deleteTechDocument(techId, docId, storagePath) {
+    showConfirm('Delete Document', 'This document will be permanently deleted.', function() {
+        var promises = [
+            db.collection('technicians').doc(techId).collection('documents').doc(docId).delete()
+        ];
+        if (storagePath) {
+            promises.push(firebase.storage().ref(storagePath).delete().catch(function() {}));
+        }
+        Promise.all(promises).then(function() {
+            showToast('Document deleted');
+            loadTechDocuments(techId);
+        }).catch(function(err) {
+            showToast('Error: ' + err.message);
+        });
+    });
+}
+
+// --- Notes ---
 function saveNotes(techId) {
     var textarea = document.getElementById('notes-' + techId);
     if (!textarea) return;
@@ -3739,14 +4394,101 @@ function saveNotes(techId) {
     });
 }
 
+// --- Delete Technician (cascade) ---
 function deleteTechnician(techId) {
-    showConfirm('Remove Technician', 'This technician and their onboarding data will be permanently removed.', function() {
-        db.collection('technicians').doc(techId).delete().then(function() {
+    showConfirm('Remove Technician', 'This technician and all their data (documents, checklist) will be permanently removed.', function() {
+        // First delete subcollection docs + storage files
+        db.collection('technicians').doc(techId).collection('documents').get().then(function(snap) {
+            var promises = [];
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                if (d.storagePath) {
+                    promises.push(firebase.storage().ref(d.storagePath).delete().catch(function() {}));
+                }
+                promises.push(doc.ref.delete());
+            });
+            return Promise.all(promises);
+        }).then(function() {
+            return db.collection('technicians').doc(techId).delete();
+        }).then(function() {
             showToast('Technician removed');
             loadTechnicians();
         }).catch(function(err) { showToast('Error: ' + err.message); });
     });
 }
+
+// --- Checklist Template Editor ---
+document.getElementById('th-manage-checklist-btn').addEventListener('click', function() {
+    openTemplateEditor();
+});
+
+function openTemplateEditor() {
+    var overlay = document.getElementById('th-template-overlay');
+    overlay.classList.add('active');
+    var templatePromise = thChecklistTemplate !== null ? Promise.resolve(thChecklistTemplate) : loadChecklistTemplate();
+    templatePromise.then(function(items) {
+        renderTemplateItems(items);
+    });
+}
+
+function renderTemplateItems(items) {
+    var container = document.getElementById('th-template-items');
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div style="font-size:13px;color:#9ca3af;padding:8px 0">No template items yet. Add items below.</div>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+        html += '<div class="th-template-item" data-index="' + i + '">';
+        html += '<span>' + thEscape(items[i]) + '</span>';
+        html += '<button onclick="removeTemplateItem(' + i + ')" title="Remove">&times;</button>';
+        html += '</div>';
+    }
+    container.innerHTML = html;
+}
+
+function removeTemplateItem(index) {
+    if (!thChecklistTemplate) return;
+    thChecklistTemplate.splice(index, 1);
+    renderTemplateItems(thChecklistTemplate);
+}
+
+document.getElementById('th-template-add-btn').addEventListener('click', function() {
+    var input = document.getElementById('th-template-new-item');
+    var val = input.value.trim();
+    if (!val) return;
+    if (!thChecklistTemplate) thChecklistTemplate = [];
+    thChecklistTemplate.push(val);
+    input.value = '';
+    renderTemplateItems(thChecklistTemplate);
+});
+
+document.getElementById('th-template-new-item').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('th-template-add-btn').click();
+    }
+});
+
+document.getElementById('th-template-save-btn').addEventListener('click', function() {
+    saveChecklistTemplate();
+});
+
+function saveChecklistTemplate() {
+    var items = thChecklistTemplate || [];
+    db.collection('settings').doc('checklist-template').set({ items: items }).then(function() {
+        showToast('Checklist template saved');
+        document.getElementById('th-template-overlay').classList.remove('active');
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+    });
+}
+
+document.getElementById('th-template-close-btn').addEventListener('click', function() {
+    document.getElementById('th-template-overlay').classList.remove('active');
+    // Reload template in case user made changes but didn't save
+    loadChecklistTemplate();
+});
 
 </script>
 
