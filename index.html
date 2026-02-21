@@ -2045,6 +2045,41 @@
         }
         .th-toast.show { opacity: 1; transform: translateY(0); }
 
+        /* Metrics Dashboard */
+        .metrics-section { margin-bottom: 32px; }
+        .metrics-section-title { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 16px; letter-spacing: -0.3px; }
+        .metrics-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+        .metrics-card { padding: 18px; border-radius: 12px; border: 1px solid #f3f4f6; background: white; text-align: center; }
+        .metrics-card-number { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+        .metrics-card-label { font-size: 12px; font-weight: 500; color: var(--gray); margin-top: 2px; }
+        .metrics-total { text-align: right; font-size: 14px; font-weight: 700; color: var(--dark); padding: 8px 0; }
+        .metrics-tables-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .metrics-table-wrapper { border: 1px solid #f3f4f6; border-radius: 12px; overflow: hidden; }
+        .metrics-table-title { font-size: 13px; font-weight: 700; color: var(--dark); padding: 14px 16px 10px; }
+        .metrics-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .metrics-table th { text-align: left; padding: 8px 16px; font-weight: 600; color: var(--gray); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f3f4f6; background: #fafafa; }
+        .metrics-table td { padding: 10px 16px; border-bottom: 1px solid #f9fafb; color: var(--dark); }
+        .metrics-table tr:last-child td { border-bottom: none; }
+        .metrics-table .rate-good { color: #10b981; font-weight: 600; }
+        .metrics-table .rate-mid { color: #d97706; font-weight: 600; }
+        .metrics-table .rate-low { color: #ef4444; font-weight: 600; }
+        .attrition-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .attrition-card { padding: 18px; border-radius: 12px; border: 1px solid #f3f4f6; background: white; text-align: center; }
+        .attrition-card-number { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+        .attrition-card-label { font-size: 12px; font-weight: 500; color: var(--gray); margin-top: 2px; }
+        .attrition-quit .attrition-card-number { color: #d97706; }
+        .attrition-fired .attrition-card-number { color: #ef4444; }
+        .badge-quit { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #fffbeb; color: #d97706; }
+        .badge-fired { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #fef2f2; color: #ef4444; }
+        .onboarding-bar { width: 60px; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+        .onboarding-bar-fill { height: 100%; border-radius: 3px; background: #10b981; }
+        .th-onboarding-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .th-onboarding-badge.complete { background: #ecfdf5; color: #10b981; }
+        .th-onboarding-badge.partial { background: #fffbeb; color: #d97706; }
+        .th-onboarding-badge.none { background: #f3f4f6; color: var(--gray); }
+        .th-assignment-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+        .th-assignment-row label { font-size: 13px; font-weight: 600; color: var(--dark); white-space: nowrap; }
+
         @media (max-width: 640px) {
             .techhub-header { padding: 16px 20px; flex-wrap: wrap; gap: 10px; }
             .techhub-header-right { width: 100%; justify-content: flex-end; }
@@ -2056,6 +2091,9 @@
             .th-tech-summary { flex-wrap: wrap; }
             .th-tech-status { order: -1; }
             .techhub-user-email { display: none; }
+            .metrics-cards { grid-template-columns: 1fr; }
+            .metrics-tables-row { grid-template-columns: 1fr; }
+            .attrition-cards { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -2305,6 +2343,7 @@
             <button class="techhub-tab active" data-tab="technicians">Technicians</button>
             <button class="techhub-tab" data-tab="sops">SOPs</button>
             <button class="techhub-tab" data-tab="documents">Documents</button>
+            <button class="techhub-tab" data-tab="metrics">Metrics</button>
         </div>
 
         <!-- Documents Panel -->
@@ -2454,6 +2493,101 @@
             </div>
             <div id="th-tech-list"></div>
         </div>
+
+        <!-- Metrics Panel -->
+        <div class="techhub-panel" id="panel-metrics">
+            <!-- Section A: Headcount by Function -->
+            <div class="metrics-section">
+                <div class="metrics-section-title">Headcount by Function</div>
+                <div class="metrics-cards">
+                    <div class="metrics-card">
+                        <div class="metrics-card-number" style="color:#2563eb">12</div>
+                        <div class="metrics-card-label">Technicians</div>
+                    </div>
+                    <div class="metrics-card">
+                        <div class="metrics-card-number" style="color:#7c3aed">4</div>
+                        <div class="metrics-card-label">Pod Leaders</div>
+                    </div>
+                    <div class="metrics-card">
+                        <div class="metrics-card-number" style="color:#059669">4</div>
+                        <div class="metrics-card-label">Regional Managers</div>
+                    </div>
+                </div>
+                <div class="metrics-total">Total Headcount: 20</div>
+            </div>
+
+            <!-- Section B: Retention Rates -->
+            <div class="metrics-section">
+                <div class="metrics-section-title">Retention Rates by Regional Manager</div>
+                <div class="metrics-tables-row">
+                    <div class="metrics-table-wrapper">
+                        <div class="metrics-table-title">90-Day Retention</div>
+                        <table class="metrics-table">
+                            <thead><tr><th>Regional Manager</th><th>Rate</th></tr></thead>
+                            <tbody>
+                                <tr><td>Brandon</td><td class="rate-mid">85%</td></tr>
+                                <tr><td>Scott</td><td class="rate-good">92%</td></tr>
+                                <tr><td>Tyler</td><td class="rate-low">78%</td></tr>
+                                <tr><td>Aaron</td><td class="rate-mid">88%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="metrics-table-wrapper">
+                        <div class="metrics-table-title">1-Year Retention</div>
+                        <table class="metrics-table">
+                            <thead><tr><th>Regional Manager</th><th>Rate</th></tr></thead>
+                            <tbody>
+                                <tr><td>Brandon</td><td class="rate-low">72%</td></tr>
+                                <tr><td>Scott</td><td class="rate-good">80%</td></tr>
+                                <tr><td>Tyler</td><td class="rate-low">65%</td></tr>
+                                <tr><td>Aaron</td><td class="rate-low">75%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section C: Attrition Rates -->
+            <div class="metrics-section">
+                <div class="metrics-section-title">Attrition Rates (Last 12 Months)</div>
+                <div class="attrition-cards">
+                    <div class="attrition-card attrition-quit">
+                        <div class="attrition-card-number">60%</div>
+                        <div class="attrition-card-label">Voluntary (Quit)</div>
+                    </div>
+                    <div class="attrition-card attrition-fired">
+                        <div class="attrition-card-number">40%</div>
+                        <div class="attrition-card-label">Involuntary (Fired)</div>
+                    </div>
+                </div>
+                <div class="metrics-table-wrapper">
+                    <div class="metrics-table-title">Attrition Breakdown</div>
+                    <table class="metrics-table">
+                        <thead><tr><th>Technician</th><th>Type</th><th>Reason</th><th>Regional Manager</th></tr></thead>
+                        <tbody>
+                            <tr><td>Ryan Patel</td><td><span class="badge-quit">Quit</span></td><td>Accepted position elsewhere</td><td>Tyler</td></tr>
+                            <tr><td>Jake Rodriguez</td><td><span class="badge-fired">Fired</span></td><td>Repeated no-shows</td><td>Aaron</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section D: Onboarding Completion -->
+            <div class="metrics-section">
+                <div class="metrics-section-title">Onboarding Completion</div>
+                <div class="metrics-table-wrapper">
+                    <table class="metrics-table">
+                        <thead><tr><th>Technician</th><th>Regional Manager</th><th>Checklist</th><th>Onboarded</th></tr></thead>
+                        <tbody>
+                            <tr><td>Marcus Johnson</td><td>Brandon</td><td>0/5</td><td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:0%"></div></div><span style="font-weight:600;color:var(--gray)">0%</span></td></tr>
+                            <tr><td>Sarah Lee</td><td>Scott</td><td>4/5</td><td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:80%"></div></div><span style="font-weight:600;color:#d97706">80%</span></td></tr>
+                            <tr><td>David Williams</td><td>Brandon</td><td>5/5</td><td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:100%"></div></div><span style="font-weight:600;color:#10b981">100%</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -3457,6 +3591,7 @@ for (var i = 0; i < tabButtons.length; i++) {
         document.getElementById('panel-documents').classList.toggle('active', tab === 'documents');
         document.getElementById('panel-sops').classList.toggle('active', tab === 'sops');
         document.getElementById('panel-technicians').classList.toggle('active', tab === 'technicians');
+        document.getElementById('panel-metrics').classList.toggle('active', tab === 'metrics');
         loadActiveTabData();
     });
 }
@@ -4092,6 +4227,26 @@ function loadTechnicians() {
             html += '<input type="date" class="th-status-select" value="' + thEscape(t.startDate || '') + '" onchange="saveTechStartDate(\'' + t._id + '\',this.value)" style="min-width:140px">';
             html += '</div>';
 
+            // Regional Manager dropdown
+            html += '<div class="th-assignment-row">';
+            html += '<label>Regional Manager:</label>';
+            html += '<select class="th-status-select" onchange="saveTechField(\'' + t._id + '\',\'regionalManager\',this.value)">';
+            var rmOptions = ['Brandon','Scott','Tyler','Aaron'];
+            for (var ri = 0; ri < rmOptions.length; ri++) {
+                html += '<option' + ((t.regionalManager || '') === rmOptions[ri] ? ' selected' : '') + '>' + rmOptions[ri] + '</option>';
+            }
+            html += '</select></div>';
+
+            // Role dropdown
+            html += '<div class="th-assignment-row">';
+            html += '<label>Role:</label>';
+            html += '<select class="th-status-select" onchange="saveTechField(\'' + t._id + '\',\'role\',this.value)">';
+            var roleOptions = ['Technician','Pod Leader'];
+            for (var roi = 0; roi < roleOptions.length; roi++) {
+                html += '<option' + ((t.role || 'Technician') === roleOptions[roi] ? ' selected' : '') + '>' + roleOptions[roi] + '</option>';
+            }
+            html += '</select></div>';
+
             // Termination info
             if (t.status === 'terminated') {
                 html += '<div class="th-termination-info">';
@@ -4102,8 +4257,15 @@ function loadTechnicians() {
             }
 
             // Checklist section
+            var onboardPct = checklist.length > 0 ? Math.round((done / checklist.length) * 100) : 0;
+            var onboardClass = onboardPct === 100 ? 'complete' : (onboardPct > 0 ? 'partial' : 'none');
             html += '<div style="margin-top:16px;border-top:1px solid #f3f4f6;padding-top:16px">';
-            html += '<label style="font-size:13px;font-weight:700;color:var(--dark)">Checklist (' + done + '/' + checklist.length + ')</label>';
+            html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+            html += '<label style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:0">Checklist (' + done + '/' + checklist.length + ')</label>';
+            if (t.status !== 'terminated') {
+                html += '<span class="th-onboarding-badge ' + onboardClass + '">' + onboardPct + '% onboarded</span>';
+            }
+            html += '</div>';
             html += '<ul class="th-checklist">';
             for (var ci = 0; ci < checklist.length; ci++) {
                 var item = checklist[ci];
@@ -4183,6 +4345,17 @@ function saveTechStartDate(techId, value) {
         startDate: value
     }).then(function() {
         showToast('Start date saved');
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+    });
+}
+
+// --- Save generic field (Regional Manager, Role) ---
+function saveTechField(techId, field, value) {
+    var update = {};
+    update[field] = value;
+    db.collection('technicians').doc(techId).update(update).then(function() {
+        showToast(field === 'regionalManager' ? 'Regional Manager updated' : 'Role updated');
     }).catch(function(err) {
         showToast('Error: ' + err.message);
     });
