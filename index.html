@@ -2480,6 +2480,22 @@
                     <input type="date" id="th-tech-interview-date">
                 </div>
                 <div class="th-form-group">
+                    <label>Regional Manager</label>
+                    <select id="th-tech-rm">
+                        <option value="Brandon">Brandon</option>
+                        <option value="Scott">Scott</option>
+                        <option value="Tyler">Tyler</option>
+                        <option value="Aaron">Aaron</option>
+                    </select>
+                </div>
+                <div class="th-form-group">
+                    <label>Role</label>
+                    <select id="th-tech-role">
+                        <option value="Technician">Technician</option>
+                        <option value="Pod Leader">Pod Leader</option>
+                    </select>
+                </div>
+                <div class="th-form-group">
                     <label>Notes (optional)</label>
                     <textarea id="th-tech-init-notes" placeholder="Any initial notes about this candidate..."></textarea>
                 </div>
@@ -3965,6 +3981,8 @@ document.getElementById('th-tech-cancel-btn').addEventListener('click', function
     document.getElementById('th-tech-phone').value = '';
     document.getElementById('th-tech-position').value = '';
     document.getElementById('th-tech-interview-date').value = '';
+    document.getElementById('th-tech-rm').selectedIndex = 0;
+    document.getElementById('th-tech-role').selectedIndex = 0;
     document.getElementById('th-tech-init-notes').value = '';
 });
 
@@ -3975,6 +3993,8 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
     var phone = document.getElementById('th-tech-phone').value.trim();
     var position = document.getElementById('th-tech-position').value.trim();
     var interviewDate = document.getElementById('th-tech-interview-date').value;
+    var rmValue = document.getElementById('th-tech-rm').value;
+    var roleValue = document.getElementById('th-tech-role').value;
     var initNotes = document.getElementById('th-tech-init-notes').value.trim();
     var btn = this;
     btn.disabled = true;
@@ -3998,8 +4018,8 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
             terminationType: null,
             terminationReason: '',
             terminatedAt: null,
-            regionalManager: 'Brandon',
-            role: 'Technician',
+            regionalManager: rmValue,
+            role: roleValue,
             checklist: checklist,
             notes: initNotes,
             addedBy: thUser.email,
@@ -4014,6 +4034,8 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
         document.getElementById('th-tech-phone').value = '';
         document.getElementById('th-tech-position').value = '';
         document.getElementById('th-tech-interview-date').value = '';
+        document.getElementById('th-tech-rm').selectedIndex = 0;
+        document.getElementById('th-tech-role').selectedIndex = 0;
         document.getElementById('th-tech-init-notes').value = '';
         btn.disabled = false;
         btn.textContent = 'Add Technician';
