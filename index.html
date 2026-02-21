@@ -2302,13 +2302,13 @@
     </div>
     <div class="techhub-content" style="max-width:960px">
         <div class="techhub-tabs">
-            <button class="techhub-tab active" data-tab="documents">Documents</button>
+            <button class="techhub-tab active" data-tab="technicians">Technicians</button>
             <button class="techhub-tab" data-tab="sops">SOPs</button>
-            <button class="techhub-tab" data-tab="technicians">Technicians</button>
+            <button class="techhub-tab" data-tab="documents">Documents</button>
         </div>
 
         <!-- Documents Panel -->
-        <div class="techhub-panel active" id="panel-documents">
+        <div class="techhub-panel" id="panel-documents">
             <div class="th-upload-zone" id="th-doc-upload-zone">
                 <div class="th-upload-zone-icon">
                     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -2405,7 +2405,7 @@
         </div>
 
         <!-- Technicians Panel -->
-        <div class="techhub-panel" id="panel-technicians">
+        <div class="techhub-panel active" id="panel-technicians">
             <div class="th-stats" id="th-tech-stats"></div>
             <div class="th-filter-bar" id="th-tech-filter-bar" style="margin-bottom:16px">
                 <button class="th-filter-chip active" data-filter="all">All</button>
@@ -3414,7 +3414,7 @@ updateHistoryBadge();
 // === TECHNICIAN HUB DASHBOARD ===
 // ============================================================
 
-var thActiveTab = 'documents';
+var thActiveTab = 'technicians';
 var thDocFilter = 'all';
 var thPendingFile = null; // staged file for document upload
 var thSopPendingFile = null; // staged file for SOP upload
@@ -3947,6 +3947,7 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
             phone: phone,
             position: position,
             interviewDate: interviewDate,
+            startDate: '',
             status: 'interview',
             terminationType: null,
             terminationReason: '',
@@ -4072,12 +4073,12 @@ function loadTechnicians() {
                 if (t.email) html += '<span>' + thEscape(t.email) + '</span>';
                 if (t.phone) html += '<span>' + thEscape(t.phone) + '</span>';
                 if (t.interviewDate) html += '<span>Interview: ' + thEscape(t.interviewDate) + '</span>';
-                else if (t.startDate) html += '<span>Started: ' + thEscape(t.startDate) + '</span>';
+                if (t.startDate) html += '<span>Started: ' + thEscape(t.startDate) + '</span>';
                 html += '</div>';
             }
 
-            // Status dropdown
-            html += '<div style="margin-top:12px;display:flex;align-items:center;gap:10px">';
+            // Status dropdown + Start Date
+            html += '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
             html += '<label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>';
             html += '<select class="th-status-select" onchange="changeTechStatus(\'' + t._id + '\',this.value,this)">';
             var statuses = ['interview','hired','active','terminated'];
@@ -4086,6 +4087,9 @@ function loadTechnicians() {
                 html += '<option value="' + statuses[si] + '"' + (t.status === statuses[si] ? ' selected' : '') + '>' + statusLabels[si] + '</option>';
             }
             html += '</select>';
+            // Start Date field
+            html += '<label style="font-size:13px;font-weight:600;color:var(--dark);margin-left:12px">Start Date:</label>';
+            html += '<input type="date" class="th-status-select" value="' + thEscape(t.startDate || '') + '" onchange="saveTechStartDate(\'' + t._id + '\',this.value)" style="min-width:140px">';
             html += '</div>';
 
             // Termination info
@@ -4168,6 +4172,17 @@ function changeTechStatus(techId, newStatus, selectEl) {
     }).then(function() {
         showToast('Status updated');
         loadTechnicians();
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+    });
+}
+
+// --- Start Date ---
+function saveTechStartDate(techId, value) {
+    db.collection('technicians').doc(techId).update({
+        startDate: value
+    }).then(function() {
+        showToast('Start date saved');
     }).catch(function(err) {
         showToast('Error: ' + err.message);
     });
