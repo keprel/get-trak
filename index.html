@@ -4300,7 +4300,50 @@ function loadMetrics() {
         html += '<div class="metrics-total">Total Headcount: ' + totalHeadcount + '</div>';
         html += '</div>';
 
-        // --- Section B: Retention Rates ---
+        // --- Section B: Onboarding Completion ---
+        var activeTechs = [];
+        for (var oi = 0; oi < techs.length; oi++) {
+            if (techs[oi].status !== 'terminated') activeTechs.push(techs[oi]);
+        }
+
+        html += '<div class="metrics-section">';
+        html += '<div class="metrics-section-title">Onboarding Completion</div>';
+        html += '<div class="metrics-table-wrapper">';
+
+        if (activeTechs.length === 0) {
+            html += '<div class="th-empty" style="padding:24px"><p style="color:var(--gray);font-size:13px">No technicians to display</p></div>';
+        } else {
+            html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Regional Manager</th><th>Checklist</th><th>Onboarded</th></tr></thead><tbody>';
+            for (var di = 0; di < activeTechs.length; di++) {
+                var dt = activeTechs[di];
+                var checklist = dt.checklist;
+                var done = 0;
+                for (var dci = 0; dci < checklist.length; dci++) {
+                    if (checklist[dci].completed) done++;
+                }
+                var total = checklist.length;
+                var pctVal = total > 0 ? Math.round((done / total) * 100) : 0;
+                var barColor, textColor;
+                if (pctVal === 100) {
+                    barColor = '#10b981';
+                    textColor = '#10b981';
+                } else if (pctVal > 0) {
+                    barColor = '#d97706';
+                    textColor = '#d97706';
+                } else {
+                    barColor = '#d1d5db';
+                    textColor = 'var(--gray)';
+                }
+                html += '<tr><td>' + thEscape(dt.name || '') + '</td><td>' + thEscape(dt.regionalManager || '') + '</td><td>' + done + '/' + total + '</td>';
+                html += '<td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:' + pctVal + '%;background:' + barColor + '"></div></div><span style="font-weight:600;color:' + textColor + '">' + pctVal + '%</span></td></tr>';
+            }
+            html += '</tbody></table>';
+        }
+
+        html += '</div>';
+        html += '</div>';
+
+        // --- Section C: Retention Rates ---
         html += '<div class="metrics-section">';
         html += '<div class="metrics-section-title">Retention Rates by Regional Manager</div>';
 
@@ -4425,49 +4468,6 @@ function loadMetrics() {
             }
         }
         html += '</tbody></table></div>';
-        html += '</div>';
-
-        // --- Section D: Onboarding Completion ---
-        var activeTechs = [];
-        for (var oi = 0; oi < techs.length; oi++) {
-            if (techs[oi].status !== 'terminated') activeTechs.push(techs[oi]);
-        }
-
-        html += '<div class="metrics-section">';
-        html += '<div class="metrics-section-title">Onboarding Completion</div>';
-        html += '<div class="metrics-table-wrapper">';
-
-        if (activeTechs.length === 0) {
-            html += '<div class="th-empty" style="padding:24px"><p style="color:var(--gray);font-size:13px">No technicians to display</p></div>';
-        } else {
-            html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Regional Manager</th><th>Checklist</th><th>Onboarded</th></tr></thead><tbody>';
-            for (var di = 0; di < activeTechs.length; di++) {
-                var dt = activeTechs[di];
-                var checklist = dt.checklist;
-                var done = 0;
-                for (var dci = 0; dci < checklist.length; dci++) {
-                    if (checklist[dci].completed) done++;
-                }
-                var total = checklist.length;
-                var pctVal = total > 0 ? Math.round((done / total) * 100) : 0;
-                var barColor, textColor;
-                if (pctVal === 100) {
-                    barColor = '#10b981';
-                    textColor = '#10b981';
-                } else if (pctVal > 0) {
-                    barColor = '#d97706';
-                    textColor = '#d97706';
-                } else {
-                    barColor = '#d1d5db';
-                    textColor = 'var(--gray)';
-                }
-                html += '<tr><td>' + thEscape(dt.name || '') + '</td><td>' + thEscape(dt.regionalManager || '') + '</td><td>' + done + '/' + total + '</td>';
-                html += '<td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:' + pctVal + '%;background:' + barColor + '"></div></div><span style="font-weight:600;color:' + textColor + '">' + pctVal + '%</span></td></tr>';
-            }
-            html += '</tbody></table>';
-        }
-
-        html += '</div>';
         html += '</div>';
 
         container.innerHTML = html;
