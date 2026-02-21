@@ -1011,6 +1011,10 @@
             transition: opacity 0.3s ease;
         }
         .login-overlay.active { opacity: 1; }
+        .login-overlay.fullscreen {
+            background: white;
+            backdrop-filter: none;
+        }
         .login-modal {
             background: white;
             border-radius: 16px;
@@ -2329,10 +2333,27 @@ const loginError = document.getElementById('login-error');
 
 // === Firebase Auth State ===
 var thUser = null;
+var isDirectTechHub = window.location.hash === '#techhub';
+
+// If direct link, hide TRAK content immediately
+if (isDirectTechHub) {
+    document.querySelector('.container').style.display = 'none';
+    document.querySelector('.site-nav').style.display = 'none';
+    var decos = document.querySelectorAll('.deco');
+    for (var di = 0; di < decos.length; di++) decos[di].style.display = 'none';
+}
+
 auth.onAuthStateChanged(function(user) {
     thUser = user;
     if (user) {
         document.getElementById('techhub-user-email').textContent = user.email;
+    }
+    if (isDirectTechHub) {
+        if (user) {
+            openTechHub();
+        } else {
+            showLoginModal(true);
+        }
     }
 });
 
@@ -2380,7 +2401,8 @@ document.getElementById('techhub-signout').addEventListener('click', function() 
 });
 
 // === Login Modal ===
-function showLoginModal() {
+function showLoginModal(fullscreen) {
+    if (fullscreen) loginOverlay.classList.add('fullscreen');
     loginOverlay.style.display = 'flex';
     requestAnimationFrame(function() {
         loginOverlay.classList.add('active');
@@ -2389,9 +2411,15 @@ function showLoginModal() {
 }
 
 function closeLoginModal() {
+    if (isDirectTechHub) {
+        // Go to the main TRAK page instead of showing blank
+        window.location.href = window.location.pathname;
+        return;
+    }
     loginOverlay.classList.remove('active');
     setTimeout(function() {
         loginOverlay.style.display = 'none';
+        loginOverlay.classList.remove('fullscreen');
         loginEmail.value = '';
         loginPassword.value = '';
         loginError.style.display = 'none';
@@ -2413,7 +2441,12 @@ function doLogin() {
     document.getElementById('login-submit').disabled = true;
     document.getElementById('login-submit').textContent = 'Signing in...';
     auth.signInWithEmailAndPassword(email, pass).then(function() {
-        closeLoginModal();
+        // Hide modal directly (don't use closeLoginModal which redirects on #techhub cancel)
+        loginOverlay.classList.remove('active', 'fullscreen');
+        loginOverlay.style.display = 'none';
+        loginEmail.value = '';
+        loginPassword.value = '';
+        loginError.style.display = 'none';
         openTechHub();
     }).catch(function(err) {
         loginError.textContent = err.code === 'auth/invalid-credential' ? 'Invalid email or password' :
