@@ -2493,95 +2493,8 @@
 
         <!-- Metrics Panel -->
         <div class="techhub-panel" id="panel-metrics">
-            <!-- Section A: Headcount by Function -->
-            <div class="metrics-section">
-                <div class="metrics-section-title">Headcount by Function</div>
-                <div class="metrics-cards">
-                    <div class="metrics-card">
-                        <div class="metrics-card-number" style="color:#2563eb">12</div>
-                        <div class="metrics-card-label">Technicians</div>
-                    </div>
-                    <div class="metrics-card">
-                        <div class="metrics-card-number" style="color:#7c3aed">4</div>
-                        <div class="metrics-card-label">Pod Leaders</div>
-                    </div>
-                    <div class="metrics-card">
-                        <div class="metrics-card-number" style="color:#059669">4</div>
-                        <div class="metrics-card-label">Regional Managers</div>
-                    </div>
-                </div>
-                <div class="metrics-total">Total Headcount: 20</div>
-            </div>
-
-            <!-- Section B: Retention Rates -->
-            <div class="metrics-section">
-                <div class="metrics-section-title">Retention Rates by Regional Manager</div>
-                <div class="metrics-tables-row">
-                    <div class="metrics-table-wrapper">
-                        <div class="metrics-table-title">90-Day Retention</div>
-                        <table class="metrics-table">
-                            <thead><tr><th>Regional Manager</th><th>Rate</th></tr></thead>
-                            <tbody>
-                                <tr><td>Brandon</td><td class="rate-mid">85%</td></tr>
-                                <tr><td>Scott</td><td class="rate-good">92%</td></tr>
-                                <tr><td>Tyler</td><td class="rate-low">78%</td></tr>
-                                <tr><td>Aaron</td><td class="rate-mid">88%</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="metrics-table-wrapper">
-                        <div class="metrics-table-title">1-Year Retention</div>
-                        <table class="metrics-table">
-                            <thead><tr><th>Regional Manager</th><th>Rate</th></tr></thead>
-                            <tbody>
-                                <tr><td>Brandon</td><td class="rate-low">72%</td></tr>
-                                <tr><td>Scott</td><td class="rate-good">80%</td></tr>
-                                <tr><td>Tyler</td><td class="rate-low">65%</td></tr>
-                                <tr><td>Aaron</td><td class="rate-low">75%</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section C: Attrition Rates -->
-            <div class="metrics-section">
-                <div class="metrics-section-title">Attrition Rates (Last 12 Months)</div>
-                <div class="attrition-cards">
-                    <div class="attrition-card attrition-quit">
-                        <div class="attrition-card-number">60%</div>
-                        <div class="attrition-card-label">Voluntary (Quit)</div>
-                    </div>
-                    <div class="attrition-card attrition-fired">
-                        <div class="attrition-card-number">40%</div>
-                        <div class="attrition-card-label">Involuntary (Fired)</div>
-                    </div>
-                </div>
-                <div class="metrics-table-wrapper">
-                    <div class="metrics-table-title">Attrition Breakdown</div>
-                    <table class="metrics-table">
-                        <thead><tr><th>Technician</th><th>Type</th><th>Reason</th><th>Regional Manager</th></tr></thead>
-                        <tbody>
-                            <tr><td>Ryan Patel</td><td><span class="badge-quit">Quit</span></td><td>Accepted position elsewhere</td><td>Tyler</td></tr>
-                            <tr><td>Jake Rodriguez</td><td><span class="badge-fired">Fired</span></td><td>Repeated no-shows</td><td>Aaron</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Section D: Onboarding Completion -->
-            <div class="metrics-section">
-                <div class="metrics-section-title">Onboarding Completion</div>
-                <div class="metrics-table-wrapper">
-                    <table class="metrics-table">
-                        <thead><tr><th>Technician</th><th>Regional Manager</th><th>Checklist</th><th>Onboarded</th></tr></thead>
-                        <tbody>
-                            <tr><td>Marcus Johnson</td><td>Brandon</td><td>0/5</td><td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:0%"></div></div><span style="font-weight:600;color:var(--gray)">0%</span></td></tr>
-                            <tr><td>Sarah Lee</td><td>Scott</td><td>4/5</td><td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:80%"></div></div><span style="font-weight:600;color:#d97706">80%</span></td></tr>
-                            <tr><td>David Williams</td><td>Brandon</td><td>5/5</td><td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:100%"></div></div><span style="font-weight:600;color:#10b981">100%</span></td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div id="metrics-content">
+                <div class="th-loading"><div class="th-spinner"></div><p style="font-size:13px;color:var(--gray);animation:none;max-width:none">Loading metrics...</p></div>
             </div>
         </div>
 
@@ -3597,6 +3510,7 @@ function loadActiveTabData() {
     if (thActiveTab === 'documents') loadDocuments();
     else if (thActiveTab === 'sops') loadSops();
     else if (thActiveTab === 'technicians') loadTechnicians();
+    else if (thActiveTab === 'metrics') loadMetrics();
 }
 
 // === HTML Escaping ===
@@ -4308,6 +4222,232 @@ function loadTechnicians() {
         }
     }).catch(function(err) {
         listEl.innerHTML = '<div class="th-empty"><h3>Error loading technicians</h3><p>' + thEscape(err.message) + '</p></div>';
+    });
+}
+
+// --- Load Metrics ---
+function loadMetrics() {
+    var container = document.getElementById('metrics-content');
+    container.innerHTML = '<div class="th-loading"><div class="th-spinner"></div><p style="font-size:13px;color:var(--gray);animation:none;max-width:none">Loading metrics...</p></div>';
+
+    db.collection('technicians').get().then(function(snap) {
+        var techs = [];
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            d._id = doc.id;
+            d.status = normalizeTechStatus(d.status);
+            // Normalize checklist
+            if (d.checklist && !Array.isArray(d.checklist)) {
+                var arr = [];
+                var keys = Object.keys(d.checklist);
+                for (var k = 0; k < keys.length; k++) {
+                    arr.push({ label: keys[k], completed: !!d.checklist[keys[k]].completed });
+                }
+                d.checklist = arr;
+            }
+            if (!d.checklist) d.checklist = [];
+            techs.push(d);
+        });
+
+        var now = new Date();
+        var rmNames = ['Brandon', 'Scott', 'Tyler', 'Aaron'];
+        var html = '';
+
+        // --- Section A: Headcount by Function ---
+        var techCount = 0;
+        var podLeaderCount = 0;
+        for (var i = 0; i < techs.length; i++) {
+            if (techs[i].status !== 'terminated') {
+                if (techs[i].role === 'Pod Leader') podLeaderCount++;
+                else techCount++;
+            }
+        }
+        var rmCount = 4;
+        var totalHeadcount = techCount + podLeaderCount + rmCount;
+
+        html += '<div class="metrics-section">';
+        html += '<div class="metrics-section-title">Headcount by Function</div>';
+        html += '<div class="metrics-cards">';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#2563eb">' + techCount + '</div><div class="metrics-card-label">Technicians</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#7c3aed">' + podLeaderCount + '</div><div class="metrics-card-label">Pod Leaders</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#059669">' + rmCount + '</div><div class="metrics-card-label">Regional Managers</div></div>';
+        html += '</div>';
+        html += '<div class="metrics-total">Total Headcount: ' + totalHeadcount + '</div>';
+        html += '</div>';
+
+        // --- Section B: Retention Rates ---
+        html += '<div class="metrics-section">';
+        html += '<div class="metrics-section-title">Retention Rates by Regional Manager</div>';
+
+        // Check if any techs have addedAt data
+        var hasAnyTechs = false;
+        for (var ri = 0; ri < techs.length; ri++) {
+            if (techs[ri].addedAt) { hasAnyTechs = true; break; }
+        }
+
+        if (!hasAnyTechs && techs.length === 0) {
+            html += '<div class="th-empty" style="padding:24px 0"><p style="color:var(--gray);font-size:13px">No technician data yet</p></div>';
+        } else {
+            html += '<div class="metrics-tables-row">';
+
+            // 90-day and 1-year retention tables
+            var periods = [{ days: 90, label: '90-Day Retention' }, { days: 365, label: '1-Year Retention' }];
+            for (var pi = 0; pi < periods.length; pi++) {
+                var period = periods[pi];
+                html += '<div class="metrics-table-wrapper">';
+                html += '<div class="metrics-table-title">' + period.label + '</div>';
+                html += '<table class="metrics-table"><thead><tr><th>Regional Manager</th><th>Rate</th></tr></thead><tbody>';
+
+                // Per-RM rows
+                for (var rmi = 0; rmi < rmNames.length; rmi++) {
+                    var rm = rmNames[rmi];
+                    var eligible = 0;
+                    var retained = 0;
+                    for (var ti = 0; ti < techs.length; ti++) {
+                        var t = techs[ti];
+                        if ((t.regionalManager || '') !== rm) continue;
+                        var addedDate = t.addedAt ? (t.addedAt.toDate ? t.addedAt.toDate() : new Date(t.addedAt)) : null;
+                        if (!addedDate) continue;
+                        var daysSinceAdded = Math.floor((now - addedDate) / (1000 * 60 * 60 * 24));
+                        if (daysSinceAdded >= period.days) {
+                            eligible++;
+                            if (t.status !== 'terminated') retained++;
+                        }
+                    }
+                    var rateStr, rateClass;
+                    if (eligible === 0) {
+                        rateStr = 'N/A';
+                        rateClass = '';
+                    } else {
+                        var pct = Math.round((retained / eligible) * 100);
+                        rateStr = pct + '%';
+                        rateClass = pct >= 90 ? 'rate-good' : (pct >= 80 ? 'rate-mid' : 'rate-low');
+                    }
+                    html += '<tr><td>' + thEscape(rm) + '</td><td class="' + rateClass + '">' + rateStr + '</td></tr>';
+                }
+
+                // Company-wide row
+                var compEligible = 0;
+                var compRetained = 0;
+                for (var ci = 0; ci < techs.length; ci++) {
+                    var ct = techs[ci];
+                    var ctAdded = ct.addedAt ? (ct.addedAt.toDate ? ct.addedAt.toDate() : new Date(ct.addedAt)) : null;
+                    if (!ctAdded) continue;
+                    var ctDays = Math.floor((now - ctAdded) / (1000 * 60 * 60 * 24));
+                    if (ctDays >= period.days) {
+                        compEligible++;
+                        if (ct.status !== 'terminated') compRetained++;
+                    }
+                }
+                var compStr, compClass;
+                if (compEligible === 0) {
+                    compStr = 'N/A';
+                    compClass = '';
+                } else {
+                    var compPct = Math.round((compRetained / compEligible) * 100);
+                    compStr = compPct + '%';
+                    compClass = compPct >= 90 ? 'rate-good' : (compPct >= 80 ? 'rate-mid' : 'rate-low');
+                }
+                html += '<tr style="border-top:2px solid #e5e7eb"><td style="font-weight:700">Company</td><td class="' + compClass + '" style="font-weight:700">' + compStr + '</td></tr>';
+                html += '</tbody></table></div>';
+            }
+
+            html += '</div>'; // metrics-tables-row
+        }
+        html += '</div>'; // metrics-section
+
+        // --- Section C: Attrition Rates (Last 12 Months) ---
+        var twelveMonthsAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        var recentTerms = [];
+        for (var ai = 0; ai < techs.length; ai++) {
+            var at = techs[ai];
+            if (at.status !== 'terminated') continue;
+            var termDate = at.terminatedAt ? (at.terminatedAt.toDate ? at.terminatedAt.toDate() : new Date(at.terminatedAt)) : null;
+            if (termDate && termDate >= twelveMonthsAgo) {
+                recentTerms.push(at);
+            }
+        }
+
+        var quitCount = 0;
+        var firedCount = 0;
+        for (var qi = 0; qi < recentTerms.length; qi++) {
+            if (recentTerms[qi].terminationType === 'fired') firedCount++;
+            else quitCount++;
+        }
+        var totalTerms = quitCount + firedCount;
+        var quitPct = totalTerms > 0 ? Math.round((quitCount / totalTerms) * 100) : 0;
+        var firedPct = totalTerms > 0 ? Math.round((firedCount / totalTerms) * 100) : 0;
+
+        html += '<div class="metrics-section">';
+        html += '<div class="metrics-section-title">Attrition Rates (Last 12 Months)</div>';
+        html += '<div class="attrition-cards">';
+        html += '<div class="attrition-card attrition-quit"><div class="attrition-card-number">' + quitPct + '%</div><div class="attrition-card-label">Voluntary (Quit)</div></div>';
+        html += '<div class="attrition-card attrition-fired"><div class="attrition-card-number">' + firedPct + '%</div><div class="attrition-card-label">Involuntary (Fired)</div></div>';
+        html += '</div>';
+
+        html += '<div class="metrics-table-wrapper">';
+        html += '<div class="metrics-table-title">Attrition Breakdown</div>';
+        html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Type</th><th>Reason</th><th>Regional Manager</th></tr></thead><tbody>';
+        if (recentTerms.length === 0) {
+            html += '<tr><td colspan="4" style="text-align:center;color:var(--gray);padding:20px">No terminations in the last 12 months</td></tr>';
+        } else {
+            for (var bi = 0; bi < recentTerms.length; bi++) {
+                var bt = recentTerms[bi];
+                var typeBadge = bt.terminationType === 'fired'
+                    ? '<span class="badge-fired">Fired</span>'
+                    : '<span class="badge-quit">Quit</span>';
+                html += '<tr><td>' + thEscape(bt.name || '') + '</td><td>' + typeBadge + '</td><td>' + thEscape(bt.terminationReason || '') + '</td><td>' + thEscape(bt.regionalManager || '') + '</td></tr>';
+            }
+        }
+        html += '</tbody></table></div>';
+        html += '</div>';
+
+        // --- Section D: Onboarding Completion ---
+        var activeTechs = [];
+        for (var oi = 0; oi < techs.length; oi++) {
+            if (techs[oi].status !== 'terminated') activeTechs.push(techs[oi]);
+        }
+
+        html += '<div class="metrics-section">';
+        html += '<div class="metrics-section-title">Onboarding Completion</div>';
+        html += '<div class="metrics-table-wrapper">';
+
+        if (activeTechs.length === 0) {
+            html += '<div class="th-empty" style="padding:24px"><p style="color:var(--gray);font-size:13px">No technicians to display</p></div>';
+        } else {
+            html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Regional Manager</th><th>Checklist</th><th>Onboarded</th></tr></thead><tbody>';
+            for (var di = 0; di < activeTechs.length; di++) {
+                var dt = activeTechs[di];
+                var checklist = dt.checklist;
+                var done = 0;
+                for (var dci = 0; dci < checklist.length; dci++) {
+                    if (checklist[dci].completed) done++;
+                }
+                var total = checklist.length;
+                var pctVal = total > 0 ? Math.round((done / total) * 100) : 0;
+                var barColor, textColor;
+                if (pctVal === 100) {
+                    barColor = '#10b981';
+                    textColor = '#10b981';
+                } else if (pctVal > 0) {
+                    barColor = '#d97706';
+                    textColor = '#d97706';
+                } else {
+                    barColor = '#d1d5db';
+                    textColor = 'var(--gray)';
+                }
+                html += '<tr><td>' + thEscape(dt.name || '') + '</td><td>' + thEscape(dt.regionalManager || '') + '</td><td>' + done + '/' + total + '</td>';
+                html += '<td><div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:' + pctVal + '%;background:' + barColor + '"></div></div><span style="font-weight:600;color:' + textColor + '">' + pctVal + '%</span></td></tr>';
+            }
+            html += '</tbody></table>';
+        }
+
+        html += '</div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+    }).catch(function(err) {
+        container.innerHTML = '<div class="th-empty"><h3>Error loading metrics</h3><p>' + thEscape(err.message) + '</p></div>';
     });
 }
 
