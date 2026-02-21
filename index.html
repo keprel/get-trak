@@ -12,6 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -33,7 +38,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 24px 24px;
+            padding: 80px 24px 24px;
         }
 
         @keyframes fadeUp {
@@ -902,9 +907,880 @@
             .history-item { flex-wrap: wrap; }
             .history-item-stats { width: 100%; margin-top: 4px; }
         }
+
+        /* Site Navigation */
+        .site-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 56px;
+            animation: fadeUp 0.4s ease-out both;
+        }
+        .nav-logo { height: 28px; }
+        .nav-logo-link { display: flex; align-items: center; }
+        .nav-tabs { display: flex; gap: 4px; }
+        .nav-tab {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+        .nav-tab:hover { color: var(--dark); background: #f9fafb; }
+        .nav-tab.active { color: var(--red); background: #fef2f2; font-weight: 600; }
+
+        @media (max-width: 640px) {
+            .site-nav { padding: 0 16px; height: 50px; }
+            .nav-logo { height: 24px; }
+            .nav-tab { padding: 6px 14px; font-size: 13px; }
+        }
+
+        /* Technician Hub */
+        .techhub-section {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 900;
+            overflow-y: auto;
+            display: none;
+            animation: fadeUp 0.4s ease-out;
+        }
+        .techhub-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 32px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .techhub-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .techhub-header img { height: 32px; }
+        .techhub-header h1 {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 0;
+            animation: none;
+        }
+        .techhub-back {
+            background: none;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            color: var(--gray);
+            transition: all 0.2s;
+        }
+        .techhub-back:hover { border-color: var(--red); color: var(--red); }
+        .techhub-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+        /* Login Modal */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .login-overlay.active { opacity: 1; }
+        .login-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .login-overlay.active .login-modal { transform: scale(1); }
+        .login-modal h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        .login-modal .modal-subtitle {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 24px;
+            max-width: none;
+            animation: none;
+        }
+        .login-modal input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 10px;
+        }
+        .login-modal input:focus { border-color: var(--red); }
+        .login-modal input.shake { animation: shake 0.4s ease; }
+        .login-error {
+            color: var(--red);
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+            max-width: none;
+            animation: none;
+        }
+        .login-modal .modal-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--red);
+            color: white;
+            margin-bottom: 10px;
+        }
+        .login-modal .modal-btn:hover { background: var(--red-light); }
+        .login-modal .modal-cancel {
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .login-modal .modal-cancel:hover { color: var(--dark); }
+
+        /* Dashboard Tabs */
+        .techhub-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 12px;
+        }
+        .techhub-tab {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+        .techhub-tab:hover { color: var(--dark); background: #f9fafb; }
+        .techhub-tab.active { color: var(--red); background: #fef2f2; font-weight: 600; }
+        .techhub-panel { display: none; }
+        .techhub-panel.active { display: block; }
+
+        /* User Info in Header */
+        .techhub-header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .techhub-user-email {
+            font-size: 13px;
+            color: var(--gray);
+        }
+        .techhub-signout {
+            background: none;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            color: var(--gray);
+            transition: all 0.2s;
+        }
+        .techhub-signout:hover { border-color: var(--red); color: var(--red); }
+
+        /* Documents Section */
+        .th-upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 16px;
+            padding: 40px 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            margin-bottom: 24px;
+        }
+        .th-upload-zone:hover, .th-upload-zone.dragover {
+            border-color: var(--red);
+            background: #fef2f2;
+        }
+        .th-upload-zone-icon {
+            width: 48px;
+            height: 48px;
+            background: #fef2f2;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .th-upload-zone-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--red);
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .th-upload-zone h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--dark);
+        }
+        .th-upload-zone p {
+            font-size: 13px;
+            color: var(--gray);
+            margin: 0;
+            animation: none;
+            max-width: none;
+        }
+
+        /* Upload Form (inline) */
+        .th-upload-form {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            background: white;
+            margin-bottom: 24px;
+            display: none;
+        }
+        .th-upload-form h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--dark);
+        }
+        .th-upload-form .form-file-name {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .th-upload-form .form-file-name svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--red);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .th-form-group { margin-bottom: 14px; }
+        .th-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+        .th-form-group select,
+        .th-form-group input,
+        .th-form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            background: white;
+        }
+        .th-form-group select:focus,
+        .th-form-group input:focus,
+        .th-form-group textarea:focus { border-color: var(--red); }
+        .th-form-group textarea { resize: vertical; min-height: 70px; }
+        .th-form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .th-btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .th-btn-primary {
+            background: var(--red);
+            color: white;
+        }
+        .th-btn-primary:hover { background: var(--red-light); }
+        .th-btn-primary:disabled { background: #d1d5db; cursor: not-allowed; }
+        .th-btn-secondary {
+            background: white;
+            color: var(--gray);
+            border: 1.5px solid #d1d5db;
+        }
+        .th-btn-secondary:hover { border-color: var(--red); color: var(--red); }
+
+        /* Progress bar */
+        .th-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #f3f4f6;
+            border-radius: 2px;
+            margin-top: 12px;
+            overflow: hidden;
+            display: none;
+        }
+        .th-progress-bar-fill {
+            height: 100%;
+            background: var(--red);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* Category Filter */
+        .th-filter-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .th-filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            border: 1px solid #e5e7eb;
+            background: white;
+            color: var(--gray);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .th-filter-chip:hover { border-color: var(--red); color: var(--red); }
+        .th-filter-chip.active { background: #fef2f2; color: var(--red); border-color: var(--red); font-weight: 600; }
+
+        /* Item Cards (shared between docs, SOPs) */
+        .th-card-list { display: grid; gap: 10px; }
+        .th-card {
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            padding: 16px 20px;
+            background: white;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .th-card:hover {
+            border-color: #e5e7eb;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+        .th-card-icon {
+            width: 40px;
+            height: 40px;
+            background: #fef2f2;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .th-card-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--red);
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .th-card-info { flex: 1; min-width: 0; }
+        .th-card-info h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .th-card-meta {
+            font-size: 12px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .th-card-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: capitalize;
+        }
+        .th-card-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .th-icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1.5px solid #e5e7eb;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .th-icon-btn:hover { border-color: var(--red); background: #fef2f2; }
+        .th-icon-btn svg {
+            width: 15px;
+            height: 15px;
+            stroke: var(--gray);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .th-icon-btn:hover svg { stroke: var(--red); }
+        .th-icon-btn-danger:hover { border-color: #ef4444; background: #fef2f2; }
+        .th-icon-btn-danger:hover svg { stroke: #ef4444; }
+
+        /* Empty State */
+        .th-empty {
+            text-align: center;
+            padding: 48px 32px;
+            color: var(--gray);
+        }
+        .th-empty h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        .th-empty p {
+            font-size: 14px;
+            max-width: none;
+            animation: none;
+            margin: 0;
+        }
+
+        /* Loading Spinner */
+        .th-loading {
+            text-align: center;
+            padding: 48px;
+        }
+        .th-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #f3f4f6;
+            border-top-color: var(--red);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        /* SOP Detail View */
+        .th-sop-detail {
+            display: none;
+        }
+        .th-sop-detail-header {
+            margin-bottom: 24px;
+        }
+        .th-sop-detail-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        .th-sop-detail-body {
+            background: #f9fafb;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            padding: 24px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--dark);
+            margin-bottom: 20px;
+        }
+        .th-back-link {
+            background: none;
+            border: none;
+            color: var(--red);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .th-back-link:hover { text-decoration: underline; }
+        .th-back-link svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Onboarding Stats */
+        .th-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .th-stat-card {
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid #f3f4f6;
+            background: white;
+            text-align: center;
+        }
+        .th-stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -1px;
+        }
+        .th-stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray);
+            margin-top: 2px;
+        }
+        .th-stat-card.stat-onboarding .th-stat-number { color: #d97706; }
+        .th-stat-card.stat-active .th-stat-number { color: #10b981; }
+
+        /* Technician Cards */
+        .th-tech-card {
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            background: white;
+            transition: all 0.2s;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .th-tech-card:hover {
+            border-color: #e5e7eb;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+        .th-tech-summary {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            cursor: pointer;
+        }
+        .th-tech-avatar {
+            width: 42px;
+            height: 42px;
+            background: #fef2f2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--red);
+            flex-shrink: 0;
+        }
+        .th-tech-info { flex: 1; min-width: 0; }
+        .th-tech-info h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+        .th-tech-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #f3f4f6;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .th-tech-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            background: var(--red);
+        }
+        .th-tech-progress-fill.complete { background: #10b981; }
+        .th-tech-progress-text {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 3px;
+        }
+        .th-tech-status {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .th-tech-status-onboarding { background: #fffbeb; color: #d97706; }
+        .th-tech-status-active { background: #ecfdf5; color: #10b981; }
+        .th-tech-status-inactive { background: #f3f4f6; color: var(--gray); }
+        .th-tech-chevron {
+            width: 20px;
+            height: 20px;
+            stroke: #9ca3af;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .th-tech-card.expanded .th-tech-chevron { transform: rotate(180deg); }
+
+        /* Expanded Checklist */
+        .th-tech-detail {
+            display: none;
+            padding: 0 20px 20px;
+            border-top: 1px solid #f3f4f6;
+        }
+        .th-tech-card.expanded .th-tech-detail { display: block; }
+        .th-checklist { list-style: none; padding: 16px 0 0; margin: 0; }
+        .th-checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f9fafb;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .th-checklist-item:hover { background: #f9fafb; margin: 0 -8px; padding: 10px 8px; border-radius: 6px; }
+        .th-checklist-item:last-child { border-bottom: none; }
+        .th-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 5px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .th-checkbox.checked {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        .th-checkbox.checked svg {
+            width: 12px;
+            height: 12px;
+            stroke: white;
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .th-checklist-label {
+            font-size: 14px;
+            color: var(--dark);
+            flex: 1;
+        }
+        .th-checklist-item.done .th-checklist-label {
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+        .th-checklist-date {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        .th-tech-notes {
+            margin-top: 16px;
+        }
+        .th-tech-notes label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+        .th-tech-notes textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            resize: vertical;
+            min-height: 60px;
+            transition: border-color 0.2s;
+        }
+        .th-tech-notes textarea:focus { border-color: var(--red); }
+        .th-tech-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        /* Confirm Dialog */
+        .th-confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+        }
+        .th-confirm-overlay.active { display: flex; }
+        .th-confirm-box {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 360px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .th-confirm-box h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        .th-confirm-box p {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 20px;
+            max-width: none;
+            animation: none;
+        }
+        .th-confirm-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .th-btn-danger {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .th-btn-danger:hover { background: #dc2626; }
+
+        /* Toast */
+        .th-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        .th-toast.show { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 640px) {
+            .techhub-header { padding: 16px 20px; flex-wrap: wrap; gap: 10px; }
+            .techhub-header-right { width: 100%; justify-content: flex-end; }
+            .techhub-content { padding: 24px 16px; }
+            .techhub-tabs { overflow-x: auto; }
+            .th-stats { grid-template-columns: 1fr; }
+            .th-card { flex-wrap: wrap; }
+            .th-card-actions { width: 100%; justify-content: flex-end; }
+            .th-tech-summary { flex-wrap: wrap; }
+            .th-tech-status { order: -1; }
+            .techhub-user-email { display: none; }
+        }
     </style>
 </head>
 <body>
+
+<!-- Site Navigation -->
+<nav class="site-nav">
+    <a href="https://adastrak.com" class="nav-logo-link">
+        <img src="logo-full.png" alt="TRAK" class="nav-logo">
+    </a>
+    <div class="nav-tabs">
+        <button class="nav-tab active" id="nav-home">Home</button>
+        <button class="nav-tab" id="nav-techhub">Technician Hub</button>
+    </div>
+</nav>
 
 <!-- Decorative ADAS equipment illustrations -->
 <!-- Autel Diagnostic Tablet -->
@@ -1108,6 +1984,185 @@
     </div>
 </div>
 
+<!-- Technician Hub Login Modal -->
+<div class="login-overlay" id="login-overlay">
+    <div class="login-modal">
+        <h2>Technician Hub</h2>
+        <p class="modal-subtitle">Sign in with your team account.</p>
+        <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+        <p class="login-error" id="login-error">Invalid email or password</p>
+        <button class="modal-btn" id="login-submit">Sign In</button>
+        <button class="modal-cancel" id="login-cancel">Cancel</button>
+    </div>
+</div>
+
+<!-- Technician Hub Section -->
+<div class="techhub-section" id="techhub-section">
+    <div class="techhub-header">
+        <div class="techhub-header-left">
+            <img src="adas-safe-logo.png" alt="ADAS Safe">
+            <h1>Technician Hub</h1>
+        </div>
+        <div class="techhub-header-right">
+            <span class="techhub-user-email" id="techhub-user-email"></span>
+            <button class="techhub-signout" id="techhub-signout">Sign Out</button>
+            <button class="techhub-back" id="techhub-back">Back to Home</button>
+        </div>
+    </div>
+    <div class="techhub-content" style="max-width:960px">
+        <div class="techhub-tabs">
+            <button class="techhub-tab active" data-tab="documents">Documents</button>
+            <button class="techhub-tab" data-tab="sops">SOPs</button>
+            <button class="techhub-tab" data-tab="onboarding">Onboarding</button>
+        </div>
+
+        <!-- Documents Panel -->
+        <div class="techhub-panel active" id="panel-documents">
+            <div class="th-upload-zone" id="th-doc-upload-zone">
+                <div class="th-upload-zone-icon">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3>Upload a Document</h3>
+                <p>Drag & drop a file, or click to browse</p>
+                <input type="file" id="th-doc-file-input" style="display:none" accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg">
+            </div>
+            <div class="th-upload-form" id="th-doc-upload-form">
+                <h3>Upload Document</h3>
+                <div class="form-file-name" id="th-doc-form-filename">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span id="th-doc-form-filename-text"></span>
+                </div>
+                <div class="th-form-group">
+                    <label>Category</label>
+                    <select id="th-doc-category">
+                        <option value="oem-statements">OEM Statements</option>
+                        <option value="training">Training</option>
+                        <option value="safety">Safety</option>
+                        <option value="forms">Forms</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="th-form-group">
+                    <label>Description (optional)</label>
+                    <textarea id="th-doc-description" placeholder="Add a note about this document..."></textarea>
+                </div>
+                <div class="th-progress-bar" id="th-doc-progress">
+                    <div class="th-progress-bar-fill" id="th-doc-progress-fill"></div>
+                </div>
+                <div class="th-form-actions">
+                    <button class="th-btn th-btn-primary" id="th-doc-upload-btn">Upload</button>
+                    <button class="th-btn th-btn-secondary" id="th-doc-cancel-btn">Cancel</button>
+                </div>
+            </div>
+            <div class="th-filter-bar" id="th-doc-filter-bar">
+                <button class="th-filter-chip active" data-filter="all">All</button>
+                <button class="th-filter-chip" data-filter="oem-statements">OEM Statements</button>
+                <button class="th-filter-chip" data-filter="training">Training</button>
+                <button class="th-filter-chip" data-filter="safety">Safety</button>
+                <button class="th-filter-chip" data-filter="forms">Forms</button>
+                <button class="th-filter-chip" data-filter="other">Other</button>
+            </div>
+            <div id="th-doc-list"></div>
+        </div>
+
+        <!-- SOPs Panel -->
+        <div class="techhub-panel" id="panel-sops">
+            <div id="th-sop-list-view">
+                <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap">
+                    <button class="th-btn th-btn-primary" id="th-sop-create-btn">Create SOP</button>
+                    <button class="th-btn th-btn-secondary" id="th-sop-upload-btn">Upload SOP PDF</button>
+                    <input type="file" id="th-sop-file-input" style="display:none" accept=".pdf">
+                </div>
+                <div id="th-sop-list"></div>
+            </div>
+            <div class="th-sop-detail" id="th-sop-detail"></div>
+            <div class="th-upload-form" id="th-sop-form" style="display:none">
+                <h3 id="th-sop-form-title">Create SOP</h3>
+                <div class="th-form-group">
+                    <label>Title</label>
+                    <input type="text" id="th-sop-title" placeholder="e.g. Forward Camera Static Calibration">
+                </div>
+                <div class="th-form-group">
+                    <label>Category</label>
+                    <select id="th-sop-category">
+                        <option value="calibration">Calibration</option>
+                        <option value="safety">Safety</option>
+                        <option value="equipment">Equipment</option>
+                        <option value="customer">Customer</option>
+                        <option value="general">General</option>
+                    </select>
+                </div>
+                <div class="th-form-group">
+                    <label>Description / Procedure</label>
+                    <textarea id="th-sop-description" placeholder="Write the full SOP content here..." style="min-height:160px"></textarea>
+                </div>
+                <div class="th-form-group" id="th-sop-file-group" style="display:none">
+                    <label>Attached PDF</label>
+                    <div class="form-file-name">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span id="th-sop-file-name-text"></span>
+                    </div>
+                </div>
+                <div class="th-progress-bar" id="th-sop-progress">
+                    <div class="th-progress-bar-fill" id="th-sop-progress-fill"></div>
+                </div>
+                <div class="th-form-actions">
+                    <button class="th-btn th-btn-primary" id="th-sop-save-btn">Save SOP</button>
+                    <button class="th-btn th-btn-secondary" id="th-sop-cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onboarding Panel -->
+        <div class="techhub-panel" id="panel-onboarding">
+            <div class="th-stats" id="th-onboarding-stats"></div>
+            <div style="margin-bottom:24px">
+                <button class="th-btn th-btn-primary" id="th-add-tech-btn">Add Technician</button>
+            </div>
+            <div class="th-upload-form" id="th-add-tech-form" style="display:none">
+                <h3>Add Technician</h3>
+                <div class="th-form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="th-tech-name" placeholder="e.g. John Smith">
+                </div>
+                <div class="th-form-group">
+                    <label>Email (optional)</label>
+                    <input type="email" id="th-tech-email" placeholder="john@adassafe.com">
+                </div>
+                <div class="th-form-group">
+                    <label>Phone (optional)</label>
+                    <input type="tel" id="th-tech-phone" placeholder="(555) 123-4567">
+                </div>
+                <div class="th-form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="th-tech-start-date">
+                </div>
+                <div class="th-form-actions">
+                    <button class="th-btn th-btn-primary" id="th-tech-save-btn">Add Technician</button>
+                    <button class="th-btn th-btn-secondary" id="th-tech-cancel-btn">Cancel</button>
+                </div>
+            </div>
+            <div id="th-tech-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="th-confirm-overlay" id="th-confirm-overlay">
+    <div class="th-confirm-box">
+        <h3 id="th-confirm-title">Are you sure?</h3>
+        <p id="th-confirm-message">This action cannot be undone.</p>
+        <div class="th-confirm-actions">
+            <button class="th-btn-danger" id="th-confirm-yes">Delete</button>
+            <button class="th-btn th-btn-secondary" id="th-confirm-no">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="th-toast" id="th-toast"></div>
+
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -1239,6 +2294,21 @@ const CALIBRATION_MAP = [
 
 const VEHICLE_MAKES = ['Toyota','Honda','Ford','Chevrolet','Chevy','Nissan','Hyundai','Kia','Subaru','Mazda','BMW','Mercedes','Audi','Volkswagen','VW','Lexus','Acura','Infiniti','Volvo','Jeep','Dodge','Ram','Chrysler','GMC','Buick','Cadillac','Lincoln','Tesla','Porsche','Land Rover','Range Rover','Jaguar','Genesis','Rivian','Lucid','Mitsubishi','Mini','Fiat','Alfa Romeo','Maserati','Bentley','Rolls Royce','Polestar','Scion','Saturn','Pontiac'];
 
+// === Firebase Init ===
+var firebaseConfig = {
+    apiKey: "AIzaSyC2pCgGNawbDFnBu1oXlnk4jaG464a7po8",
+    authDomain: "technician-hub.firebaseapp.com",
+    projectId: "technician-hub",
+    storageBucket: "technician-hub.firebasestorage.app",
+    messagingSenderId: "829944081206",
+    appId: "1:829944081206:web:4bb3c30d0322a1c254a197"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var auth = firebase.auth();
+var storage = firebase.storage();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
 // DOM refs
 const passwordOverlay = document.getElementById('password-overlay');
 const passwordInput = document.getElementById('password-input');
@@ -1251,17 +2321,126 @@ const resultsSection = document.getElementById('results-section');
 const uploadSection = document.getElementById('upload-section');
 const historySection = document.getElementById('history-section');
 const historyBadge = document.getElementById('history-badge');
+const techHubSection = document.getElementById('techhub-section');
+const loginOverlay = document.getElementById('login-overlay');
+const loginEmail = document.getElementById('login-email');
+const loginPassword = document.getElementById('login-password');
+const loginError = document.getElementById('login-error');
 
-// Open password modal from Customer Portal card
-document.getElementById('customer-portal-trigger').addEventListener('click', function() {
+// === Firebase Auth State ===
+var thUser = null;
+auth.onAuthStateChanged(function(user) {
+    thUser = user;
+    if (user) {
+        document.getElementById('techhub-user-email').textContent = user.email;
+    }
+});
+
+// Open password modal (Mapper only now)
+function showPasswordModal() {
     passwordOverlay.style.display = 'flex';
     requestAnimationFrame(function() {
         passwordOverlay.classList.add('active');
         passwordInput.focus();
     });
+}
+
+// Open password modal from Customer Portal card
+document.getElementById('customer-portal-trigger').addEventListener('click', function() {
+    showPasswordModal();
 });
 
-// Password submit
+// Technician Hub nav tab -> Firebase login
+document.getElementById('nav-techhub').addEventListener('click', function() {
+    if (thUser) {
+        openTechHub();
+    } else {
+        showLoginModal();
+    }
+});
+
+// Home nav tab
+document.getElementById('nav-home').addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Technician Hub back button (keeps session alive)
+document.getElementById('techhub-back').addEventListener('click', function() {
+    techHubSection.style.display = 'none';
+    document.body.style.overflow = '';
+});
+
+// Sign out
+document.getElementById('techhub-signout').addEventListener('click', function() {
+    auth.signOut().then(function() {
+        techHubSection.style.display = 'none';
+        document.body.style.overflow = '';
+        thUser = null;
+    });
+});
+
+// === Login Modal ===
+function showLoginModal() {
+    loginOverlay.style.display = 'flex';
+    requestAnimationFrame(function() {
+        loginOverlay.classList.add('active');
+        loginEmail.focus();
+    });
+}
+
+function closeLoginModal() {
+    loginOverlay.classList.remove('active');
+    setTimeout(function() {
+        loginOverlay.style.display = 'none';
+        loginEmail.value = '';
+        loginPassword.value = '';
+        loginError.style.display = 'none';
+    }, 300);
+}
+
+document.getElementById('login-submit').addEventListener('click', doLogin);
+loginPassword.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+loginEmail.addEventListener('keydown', function(e) { if (e.key === 'Enter') loginPassword.focus(); });
+
+function doLogin() {
+    var email = loginEmail.value.trim();
+    var pass = loginPassword.value;
+    if (!email || !pass) {
+        loginError.textContent = 'Please enter email and password';
+        loginError.style.display = 'block';
+        return;
+    }
+    document.getElementById('login-submit').disabled = true;
+    document.getElementById('login-submit').textContent = 'Signing in...';
+    auth.signInWithEmailAndPassword(email, pass).then(function() {
+        closeLoginModal();
+        openTechHub();
+    }).catch(function(err) {
+        loginError.textContent = err.code === 'auth/invalid-credential' ? 'Invalid email or password' :
+            err.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' :
+            err.message;
+        loginError.style.display = 'block';
+        loginPassword.classList.add('shake');
+        setTimeout(function() { loginPassword.classList.remove('shake'); }, 400);
+    }).finally(function() {
+        document.getElementById('login-submit').disabled = false;
+        document.getElementById('login-submit').textContent = 'Sign In';
+    });
+}
+
+document.getElementById('login-cancel').addEventListener('click', closeLoginModal);
+loginOverlay.addEventListener('click', function(e) {
+    if (e.target === loginOverlay) closeLoginModal();
+});
+
+function openTechHub() {
+    techHubSection.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    // Load the active tab's data
+    loadActiveTabData();
+}
+
+// === Password Modal (Mapper only) ===
 document.getElementById('password-submit').addEventListener('click', checkPassword);
 passwordInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') checkPassword();
@@ -1278,7 +2457,6 @@ function checkPassword() {
     }
 }
 
-// Close modal
 document.getElementById('password-cancel').addEventListener('click', closePasswordModal);
 passwordOverlay.addEventListener('click', function(e) {
     if (e.target === passwordOverlay) closePasswordModal();
@@ -1858,6 +3036,647 @@ function downloadHistoryPDF(id) {
 
 // Update badge on load
 updateHistoryBadge();
+
+// ============================================================
+// === TECHNICIAN HUB DASHBOARD ===
+// ============================================================
+
+var thActiveTab = 'documents';
+var thDocFilter = 'all';
+var thPendingFile = null; // staged file for document upload
+var thSopPendingFile = null; // staged file for SOP upload
+var thConfirmCallback = null;
+
+// === Toast ===
+function showToast(msg) {
+    var t = document.getElementById('th-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+// === Confirm Dialog ===
+function showConfirm(title, message, onConfirm) {
+    document.getElementById('th-confirm-title').textContent = title;
+    document.getElementById('th-confirm-message').textContent = message;
+    thConfirmCallback = onConfirm;
+    document.getElementById('th-confirm-overlay').classList.add('active');
+}
+document.getElementById('th-confirm-yes').addEventListener('click', function() {
+    document.getElementById('th-confirm-overlay').classList.remove('active');
+    if (thConfirmCallback) thConfirmCallback();
+    thConfirmCallback = null;
+});
+document.getElementById('th-confirm-no').addEventListener('click', function() {
+    document.getElementById('th-confirm-overlay').classList.remove('active');
+    thConfirmCallback = null;
+});
+
+// === Tab Switching ===
+var tabButtons = document.querySelectorAll('.techhub-tab');
+for (var i = 0; i < tabButtons.length; i++) {
+    tabButtons[i].addEventListener('click', function() {
+        var tab = this.getAttribute('data-tab');
+        thActiveTab = tab;
+        for (var j = 0; j < tabButtons.length; j++) {
+            tabButtons[j].classList.toggle('active', tabButtons[j].getAttribute('data-tab') === tab);
+        }
+        document.getElementById('panel-documents').classList.toggle('active', tab === 'documents');
+        document.getElementById('panel-sops').classList.toggle('active', tab === 'sops');
+        document.getElementById('panel-onboarding').classList.toggle('active', tab === 'onboarding');
+        loadActiveTabData();
+    });
+}
+
+function loadActiveTabData() {
+    if (thActiveTab === 'documents') loadDocuments();
+    else if (thActiveTab === 'sops') loadSops();
+    else if (thActiveTab === 'onboarding') loadTechnicians();
+}
+
+// === HTML Escaping ===
+function thEscape(text) {
+    var d = document.createElement('div');
+    d.textContent = text || '';
+    return d.innerHTML;
+}
+
+function thFormatDate(timestamp) {
+    if (!timestamp) return '';
+    var d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return (d.getMonth()+1) + '/' + d.getDate() + '/' + d.getFullYear();
+}
+
+var CATEGORY_LABELS = {
+    'oem-statements': 'OEM Statements', 'training': 'Training', 'safety': 'Safety',
+    'forms': 'Forms', 'other': 'Other', 'calibration': 'Calibration',
+    'equipment': 'Equipment', 'customer': 'Customer', 'general': 'General'
+};
+
+// ============================================================
+// === DOCUMENTS ===
+// ============================================================
+
+var docUploadZone = document.getElementById('th-doc-upload-zone');
+var docFileInput = document.getElementById('th-doc-file-input');
+var docUploadForm = document.getElementById('th-doc-upload-form');
+
+docUploadZone.addEventListener('click', function() { docFileInput.click(); });
+docUploadZone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('dragover'); });
+docUploadZone.addEventListener('dragleave', function() { this.classList.remove('dragover'); });
+docUploadZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) stageDocFile(e.dataTransfer.files[0]);
+});
+docFileInput.addEventListener('change', function() {
+    if (this.files[0]) stageDocFile(this.files[0]);
+});
+
+function stageDocFile(file) {
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('File must be under 10 MB');
+        return;
+    }
+    thPendingFile = file;
+    document.getElementById('th-doc-form-filename-text').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+    docUploadForm.style.display = 'block';
+    docUploadZone.style.display = 'none';
+}
+
+document.getElementById('th-doc-cancel-btn').addEventListener('click', function() {
+    thPendingFile = null;
+    docUploadForm.style.display = 'none';
+    docUploadZone.style.display = '';
+    docFileInput.value = '';
+});
+
+document.getElementById('th-doc-upload-btn').addEventListener('click', function() {
+    if (!thPendingFile || !thUser) return;
+    var file = thPendingFile;
+    var category = document.getElementById('th-doc-category').value;
+    var description = document.getElementById('th-doc-description').value.trim();
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+    var progressBar = document.getElementById('th-doc-progress');
+    var progressFill = document.getElementById('th-doc-progress-fill');
+    progressBar.style.display = 'block';
+
+    var path = 'techhub/documents/' + Date.now() + '_' + file.name;
+    var uploadTask = storage.ref(path).put(file);
+
+    uploadTask.on('state_changed', function(snap) {
+        var pct = (snap.bytesTransferred / snap.totalBytes) * 100;
+        progressFill.style.width = pct + '%';
+    }, function(err) {
+        showToast('Upload failed: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Upload';
+        progressBar.style.display = 'none';
+    }, function() {
+        uploadTask.snapshot.ref.getDownloadURL().then(function(url) {
+            return db.collection('documents').add({
+                name: file.name,
+                category: category,
+                fileUrl: url,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                storagePath: path,
+                description: description,
+                uploadedBy: thUser.email,
+                uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }).then(function() {
+            showToast('Document uploaded');
+            thPendingFile = null;
+            docUploadForm.style.display = 'none';
+            docUploadZone.style.display = '';
+            docFileInput.value = '';
+            document.getElementById('th-doc-description').value = '';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+            btn.disabled = false;
+            btn.textContent = 'Upload';
+            loadDocuments();
+        }).catch(function(err) {
+            showToast('Error saving: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Upload';
+            progressBar.style.display = 'none';
+        });
+    });
+});
+
+// Category filter
+var filterChips = document.querySelectorAll('#th-doc-filter-bar .th-filter-chip');
+for (var i = 0; i < filterChips.length; i++) {
+    filterChips[i].addEventListener('click', function() {
+        thDocFilter = this.getAttribute('data-filter');
+        for (var j = 0; j < filterChips.length; j++) {
+            filterChips[j].classList.toggle('active', filterChips[j].getAttribute('data-filter') === thDocFilter);
+        }
+        loadDocuments();
+    });
+}
+
+function loadDocuments() {
+    var listEl = document.getElementById('th-doc-list');
+    listEl.innerHTML = '<div class="th-loading"><div class="th-spinner"></div><p style="font-size:13px;color:var(--gray);animation:none;max-width:none">Loading documents...</p></div>';
+    var query = db.collection('documents').orderBy('uploadedAt', 'desc');
+    if (thDocFilter !== 'all') query = query.where('category', '==', thDocFilter);
+    query.get().then(function(snap) {
+        if (snap.empty) {
+            listEl.innerHTML = '<div class="th-empty"><h3>No documents yet</h3><p>Upload your first document to get started.</p></div>';
+            return;
+        }
+        var html = '<div class="th-card-list">';
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            var ext = (d.fileName || '').split('.').pop().toUpperCase();
+            html += '<div class="th-card">';
+            html += '<div class="th-card-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>';
+            html += '<div class="th-card-info">';
+            html += '<h4>' + thEscape(d.name) + '</h4>';
+            html += '<div class="th-card-meta">';
+            html += '<span class="th-card-tag">' + thEscape(CATEGORY_LABELS[d.category] || d.category) + '</span>';
+            html += '<span>' + thEscape(ext) + '</span>';
+            html += '<span>' + thFormatDate(d.uploadedAt) + '</span>';
+            html += '<span>' + thEscape(d.uploadedBy) + '</span>';
+            html += '</div>';
+            if (d.description) html += '<p style="font-size:12px;color:var(--gray);margin-top:4px;animation:none;max-width:none">' + thEscape(d.description) + '</p>';
+            html += '</div>';
+            html += '<div class="th-card-actions">';
+            html += '<button class="th-icon-btn" onclick="window.open(\'' + d.fileUrl + '\',\'_blank\')" title="Download"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>';
+            html += '<button class="th-icon-btn th-icon-btn-danger" onclick="deleteDocument(\'' + doc.id + '\',\'' + thEscape(d.storagePath || '') + '\')" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+            html += '</div></div>';
+        });
+        html += '</div>';
+        listEl.innerHTML = html;
+    }).catch(function(err) {
+        listEl.innerHTML = '<div class="th-empty"><h3>Error loading documents</h3><p>' + thEscape(err.message) + '</p></div>';
+    });
+}
+
+function deleteDocument(docId, storagePath) {
+    showConfirm('Delete Document', 'This document will be permanently removed.', function() {
+        db.collection('documents').doc(docId).delete().then(function() {
+            if (storagePath) storage.ref(storagePath).delete().catch(function() {});
+            showToast('Document deleted');
+            loadDocuments();
+        }).catch(function(err) { showToast('Error: ' + err.message); });
+    });
+}
+
+// ============================================================
+// === SOPs ===
+// ============================================================
+
+var sopForm = document.getElementById('th-sop-form');
+var sopListView = document.getElementById('th-sop-list-view');
+var sopDetail = document.getElementById('th-sop-detail');
+var sopFileInput = document.getElementById('th-sop-file-input');
+
+document.getElementById('th-sop-create-btn').addEventListener('click', function() {
+    thSopPendingFile = null;
+    document.getElementById('th-sop-file-group').style.display = 'none';
+    document.getElementById('th-sop-form-title').textContent = 'Create SOP';
+    document.getElementById('th-sop-title').value = '';
+    document.getElementById('th-sop-category').value = 'calibration';
+    document.getElementById('th-sop-description').value = '';
+    sopListView.style.display = 'none';
+    sopForm.style.display = 'block';
+});
+
+document.getElementById('th-sop-upload-btn').addEventListener('click', function() {
+    sopFileInput.click();
+});
+
+sopFileInput.addEventListener('change', function() {
+    if (!this.files[0]) return;
+    var file = this.files[0];
+    if (file.size > 10 * 1024 * 1024) { showToast('File must be under 10 MB'); return; }
+    thSopPendingFile = file;
+    document.getElementById('th-sop-file-name-text').textContent = file.name;
+    document.getElementById('th-sop-file-group').style.display = 'block';
+    document.getElementById('th-sop-form-title').textContent = 'Upload SOP PDF';
+    document.getElementById('th-sop-title').value = file.name.replace(/\.pdf$/i, '');
+    document.getElementById('th-sop-category').value = 'calibration';
+    document.getElementById('th-sop-description').value = '';
+    sopListView.style.display = 'none';
+    sopForm.style.display = 'block';
+});
+
+document.getElementById('th-sop-cancel-btn').addEventListener('click', function() {
+    sopForm.style.display = 'none';
+    sopListView.style.display = '';
+    thSopPendingFile = null;
+    sopFileInput.value = '';
+});
+
+document.getElementById('th-sop-save-btn').addEventListener('click', function() {
+    var title = document.getElementById('th-sop-title').value.trim();
+    var category = document.getElementById('th-sop-category').value;
+    var description = document.getElementById('th-sop-description').value.trim();
+    if (!title) { showToast('Please enter a title'); return; }
+    if (!description && !thSopPendingFile) { showToast('Please enter a description or attach a PDF'); return; }
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    var progressBar = document.getElementById('th-sop-progress');
+    var progressFill = document.getElementById('th-sop-progress-fill');
+
+    function saveSopDoc(fileUrl, fileName, storagePath) {
+        db.collection('sops').add({
+            title: title,
+            description: description,
+            category: category,
+            fileUrl: fileUrl || '',
+            fileName: fileName || '',
+            storagePath: storagePath || '',
+            createdBy: thUser.email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function() {
+            showToast('SOP saved');
+            sopForm.style.display = 'none';
+            sopListView.style.display = '';
+            thSopPendingFile = null;
+            sopFileInput.value = '';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+            btn.disabled = false;
+            btn.textContent = 'Save SOP';
+            loadSops();
+        }).catch(function(err) {
+            showToast('Error: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Save SOP';
+            progressBar.style.display = 'none';
+        });
+    }
+
+    if (thSopPendingFile) {
+        progressBar.style.display = 'block';
+        var path = 'techhub/sops/' + Date.now() + '_' + thSopPendingFile.name;
+        var uploadTask = storage.ref(path).put(thSopPendingFile);
+        uploadTask.on('state_changed', function(snap) {
+            progressFill.style.width = ((snap.bytesTransferred / snap.totalBytes) * 100) + '%';
+        }, function(err) {
+            showToast('Upload failed: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Save SOP';
+            progressBar.style.display = 'none';
+        }, function() {
+            uploadTask.snapshot.ref.getDownloadURL().then(function(url) {
+                saveSopDoc(url, thSopPendingFile.name, path);
+            });
+        });
+    } else {
+        saveSopDoc('', '', '');
+    }
+});
+
+function loadSops() {
+    var listEl = document.getElementById('th-sop-list');
+    listEl.innerHTML = '<div class="th-loading"><div class="th-spinner"></div><p style="font-size:13px;color:var(--gray);animation:none;max-width:none">Loading SOPs...</p></div>';
+    db.collection('sops').orderBy('createdAt', 'desc').get().then(function(snap) {
+        if (snap.empty) {
+            listEl.innerHTML = '<div class="th-empty"><h3>No SOPs yet</h3><p>Create your first standard operating procedure.</p></div>';
+            return;
+        }
+        var html = '<div class="th-card-list">';
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            html += '<div class="th-card" style="cursor:pointer" onclick="viewSop(\'' + doc.id + '\')">';
+            html += '<div class="th-card-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>';
+            html += '<div class="th-card-info">';
+            html += '<h4>' + thEscape(d.title) + '</h4>';
+            html += '<div class="th-card-meta">';
+            html += '<span class="th-card-tag">' + thEscape(CATEGORY_LABELS[d.category] || d.category) + '</span>';
+            if (d.fileName) html += '<span>PDF attached</span>';
+            html += '<span>' + thFormatDate(d.createdAt) + '</span>';
+            html += '<span>' + thEscape(d.createdBy) + '</span>';
+            html += '</div>';
+            if (d.description) {
+                var desc = d.description.length > 120 ? d.description.substring(0, 120) + '...' : d.description;
+                html += '<p style="font-size:12px;color:var(--gray);margin-top:4px;animation:none;max-width:none">' + thEscape(desc) + '</p>';
+            }
+            html += '</div>';
+            html += '<div class="th-card-actions">';
+            html += '<button class="th-icon-btn th-icon-btn-danger" onclick="event.stopPropagation();deleteSop(\'' + doc.id + '\',\'' + thEscape(d.storagePath || '') + '\')" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+            html += '</div></div>';
+        });
+        html += '</div>';
+        listEl.innerHTML = html;
+    }).catch(function(err) {
+        listEl.innerHTML = '<div class="th-empty"><h3>Error loading SOPs</h3><p>' + thEscape(err.message) + '</p></div>';
+    });
+}
+
+function viewSop(sopId) {
+    sopListView.style.display = 'none';
+    sopDetail.style.display = 'block';
+    sopDetail.innerHTML = '<div class="th-loading"><div class="th-spinner"></div></div>';
+    db.collection('sops').doc(sopId).get().then(function(doc) {
+        if (!doc.exists) { sopDetail.innerHTML = '<p>SOP not found.</p>'; return; }
+        var d = doc.data();
+        var html = '<button class="th-back-link" onclick="closeSopDetail()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back to SOPs</button>';
+        html += '<div class="th-sop-detail-header">';
+        html += '<h2>' + thEscape(d.title) + '</h2>';
+        html += '<div class="th-card-meta" style="margin-bottom:8px">';
+        html += '<span class="th-card-tag">' + thEscape(CATEGORY_LABELS[d.category] || d.category) + '</span>';
+        html += '<span>Created ' + thFormatDate(d.createdAt) + '</span>';
+        html += '<span>by ' + thEscape(d.createdBy) + '</span>';
+        html += '</div>';
+        if (d.fileUrl) {
+            html += '<a href="' + d.fileUrl + '" target="_blank" class="th-btn th-btn-primary" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;padding:8px 16px;margin-top:4px">';
+            html += '<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+            html += 'Download PDF</a>';
+        }
+        html += '</div>';
+        if (d.description) {
+            html += '<div class="th-sop-detail-body">' + thEscape(d.description) + '</div>';
+        }
+        sopDetail.innerHTML = html;
+    });
+}
+
+function closeSopDetail() {
+    sopDetail.style.display = 'none';
+    sopListView.style.display = '';
+}
+
+function deleteSop(sopId, storagePath) {
+    showConfirm('Delete SOP', 'This SOP will be permanently removed.', function() {
+        db.collection('sops').doc(sopId).delete().then(function() {
+            if (storagePath) storage.ref(storagePath).delete().catch(function() {});
+            showToast('SOP deleted');
+            loadSops();
+        }).catch(function(err) { showToast('Error: ' + err.message); });
+    });
+}
+
+// ============================================================
+// === ONBOARDING ===
+// ============================================================
+
+var CHECKLIST_ITEMS = [
+    { key: 'safety-training', label: 'Safety Training Complete' },
+    { key: 'equipment-orientation', label: 'Equipment Orientation' },
+    { key: 'first-ride-along', label: 'First Ride-Along' },
+    { key: 'solo-static-cal', label: 'Solo Static Calibration' },
+    { key: 'solo-dynamic-cal', label: 'Solo Dynamic Calibration' },
+    { key: 'customer-interaction', label: 'Customer Interaction Training' },
+    { key: 'documentation-review', label: 'Documentation & Reporting Review' },
+    { key: 'final-signoff', label: 'Final Manager Sign-Off' }
+];
+
+document.getElementById('th-add-tech-btn').addEventListener('click', function() {
+    document.getElementById('th-add-tech-form').style.display = 'block';
+    this.style.display = 'none';
+    document.getElementById('th-tech-name').focus();
+});
+
+document.getElementById('th-tech-cancel-btn').addEventListener('click', function() {
+    document.getElementById('th-add-tech-form').style.display = 'none';
+    document.getElementById('th-add-tech-btn').style.display = '';
+    document.getElementById('th-tech-name').value = '';
+    document.getElementById('th-tech-email').value = '';
+    document.getElementById('th-tech-phone').value = '';
+    document.getElementById('th-tech-start-date').value = '';
+});
+
+document.getElementById('th-tech-save-btn').addEventListener('click', function() {
+    var name = document.getElementById('th-tech-name').value.trim();
+    if (!name) { showToast('Please enter a name'); return; }
+    var email = document.getElementById('th-tech-email').value.trim();
+    var phone = document.getElementById('th-tech-phone').value.trim();
+    var startDate = document.getElementById('th-tech-start-date').value;
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+
+    var checklist = {};
+    for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
+        checklist[CHECKLIST_ITEMS[i].key] = { completed: false, completedAt: null };
+    }
+
+    db.collection('technicians').add({
+        name: name,
+        email: email,
+        phone: phone,
+        startDate: startDate,
+        status: 'onboarding',
+        checklist: checklist,
+        notes: '',
+        addedBy: thUser.email,
+        addedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function() {
+        showToast('Technician added');
+        document.getElementById('th-add-tech-form').style.display = 'none';
+        document.getElementById('th-add-tech-btn').style.display = '';
+        document.getElementById('th-tech-name').value = '';
+        document.getElementById('th-tech-email').value = '';
+        document.getElementById('th-tech-phone').value = '';
+        document.getElementById('th-tech-start-date').value = '';
+        btn.disabled = false;
+        btn.textContent = 'Add Technician';
+        loadTechnicians();
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Add Technician';
+    });
+});
+
+function loadTechnicians() {
+    var statsEl = document.getElementById('th-onboarding-stats');
+    var listEl = document.getElementById('th-tech-list');
+    listEl.innerHTML = '<div class="th-loading"><div class="th-spinner"></div><p style="font-size:13px;color:var(--gray);animation:none;max-width:none">Loading technicians...</p></div>';
+
+    db.collection('technicians').orderBy('addedAt', 'desc').get().then(function(snap) {
+        var total = 0, onboarding = 0, active = 0;
+        var techs = [];
+        snap.forEach(function(doc) {
+            var d = doc.data();
+            d._id = doc.id;
+            techs.push(d);
+            total++;
+            if (d.status === 'onboarding') onboarding++;
+            else if (d.status === 'active') active++;
+        });
+
+        // Stats
+        statsEl.innerHTML =
+            '<div class="th-stat-card"><div class="th-stat-number">' + total + '</div><div class="th-stat-label">Total Technicians</div></div>' +
+            '<div class="th-stat-card stat-onboarding"><div class="th-stat-number">' + onboarding + '</div><div class="th-stat-label">Onboarding</div></div>' +
+            '<div class="th-stat-card stat-active"><div class="th-stat-number">' + active + '</div><div class="th-stat-label">Active</div></div>';
+
+        if (techs.length === 0) {
+            listEl.innerHTML = '<div class="th-empty"><h3>No technicians yet</h3><p>Add your first technician to start tracking onboarding.</p></div>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < techs.length; i++) {
+            var t = techs[i];
+            var checklist = t.checklist || {};
+            var done = 0;
+            for (var ci = 0; ci < CHECKLIST_ITEMS.length; ci++) {
+                if (checklist[CHECKLIST_ITEMS[ci].key] && checklist[CHECKLIST_ITEMS[ci].key].completed) done++;
+            }
+            var pct = Math.round((done / CHECKLIST_ITEMS.length) * 100);
+            var initials = t.name.split(' ').map(function(w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
+            var statusClass = t.status === 'active' ? 'th-tech-status-active' : t.status === 'onboarding' ? 'th-tech-status-onboarding' : 'th-tech-status-inactive';
+            var statusLabel = t.status === 'active' ? 'Active' : t.status === 'onboarding' ? 'Onboarding' : 'Inactive';
+
+            html += '<div class="th-tech-card" id="tech-card-' + t._id + '">';
+            html += '<div class="th-tech-summary" onclick="toggleTechCard(\'' + t._id + '\')">';
+            html += '<div class="th-tech-avatar">' + thEscape(initials) + '</div>';
+            html += '<div class="th-tech-info">';
+            html += '<h4>' + thEscape(t.name) + '</h4>';
+            html += '<div class="th-tech-progress-bar"><div class="th-tech-progress-fill' + (pct === 100 ? ' complete' : '') + '" style="width:' + pct + '%"></div></div>';
+            html += '<div class="th-tech-progress-text">' + done + '/' + CHECKLIST_ITEMS.length + ' tasks complete</div>';
+            html += '</div>';
+            html += '<span class="th-tech-status ' + statusClass + '">' + statusLabel + '</span>';
+            html += '<svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+            html += '</div>';
+
+            // Expanded detail
+            html += '<div class="th-tech-detail">';
+            if (t.email || t.phone || t.startDate) {
+                html += '<div style="font-size:13px;color:var(--gray);padding-top:12px;display:flex;gap:16px;flex-wrap:wrap">';
+                if (t.email) html += '<span>' + thEscape(t.email) + '</span>';
+                if (t.phone) html += '<span>' + thEscape(t.phone) + '</span>';
+                if (t.startDate) html += '<span>Started ' + thEscape(t.startDate) + '</span>';
+                html += '</div>';
+            }
+            html += '<ul class="th-checklist">';
+            for (var ci = 0; ci < CHECKLIST_ITEMS.length; ci++) {
+                var item = CHECKLIST_ITEMS[ci];
+                var checked = checklist[item.key] && checklist[item.key].completed;
+                var completedAt = checked && checklist[item.key].completedAt ? thFormatDate(checklist[item.key].completedAt) : '';
+                html += '<li class="th-checklist-item' + (checked ? ' done' : '') + '" onclick="toggleChecklist(\'' + t._id + '\',\'' + item.key + '\',' + (checked ? 'false' : 'true') + ')">';
+                html += '<div class="th-checkbox' + (checked ? ' checked' : '') + '">' + (checked ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</div>';
+                html += '<span class="th-checklist-label">' + thEscape(item.label) + '</span>';
+                if (completedAt) html += '<span class="th-checklist-date">' + completedAt + '</span>';
+                html += '</li>';
+            }
+            html += '</ul>';
+
+            // Notes
+            html += '<div class="th-tech-notes">';
+            html += '<label>Notes</label>';
+            html += '<textarea id="notes-' + t._id + '" placeholder="Add notes...">' + thEscape(t.notes || '') + '</textarea>';
+            html += '</div>';
+            html += '<div class="th-tech-actions">';
+            html += '<button class="th-btn th-btn-secondary" onclick="saveNotes(\'' + t._id + '\')" style="font-size:13px;padding:6px 14px">Save Notes</button>';
+            html += '<button class="th-btn th-btn-secondary th-icon-btn-danger" onclick="deleteTechnician(\'' + t._id + '\')" style="font-size:13px;padding:6px 14px;color:#ef4444;border-color:#fca5a5">Remove</button>';
+            html += '</div>';
+            html += '</div></div>';
+        }
+        listEl.innerHTML = html;
+    }).catch(function(err) {
+        listEl.innerHTML = '<div class="th-empty"><h3>Error loading technicians</h3><p>' + thEscape(err.message) + '</p></div>';
+    });
+}
+
+function toggleTechCard(id) {
+    var card = document.getElementById('tech-card-' + id);
+    if (card) card.classList.toggle('expanded');
+}
+
+function toggleChecklist(techId, key, newValue) {
+    var update = {};
+    update['checklist.' + key + '.completed'] = newValue;
+    update['checklist.' + key + '.completedAt'] = newValue ? firebase.firestore.FieldValue.serverTimestamp() : null;
+    db.collection('technicians').doc(techId).update(update).then(function() {
+        // Check if all items are complete to auto-set status
+        return db.collection('technicians').doc(techId).get();
+    }).then(function(doc) {
+        var d = doc.data();
+        var checklist = d.checklist || {};
+        var allDone = true;
+        for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
+            if (!checklist[CHECKLIST_ITEMS[i].key] || !checklist[CHECKLIST_ITEMS[i].key].completed) {
+                allDone = false;
+                break;
+            }
+        }
+        var newStatus = allDone ? 'active' : 'onboarding';
+        if (d.status !== newStatus && d.status !== 'inactive') {
+            return db.collection('technicians').doc(techId).update({ status: newStatus });
+        }
+    }).then(function() {
+        loadTechnicians();
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+    });
+}
+
+function saveNotes(techId) {
+    var textarea = document.getElementById('notes-' + techId);
+    if (!textarea) return;
+    db.collection('technicians').doc(techId).update({
+        notes: textarea.value
+    }).then(function() {
+        showToast('Notes saved');
+    }).catch(function(err) {
+        showToast('Error: ' + err.message);
+    });
+}
+
+function deleteTechnician(techId) {
+    showConfirm('Remove Technician', 'This technician and their onboarding data will be permanently removed.', function() {
+        db.collection('technicians').doc(techId).delete().then(function() {
+            showToast('Technician removed');
+            loadTechnicians();
+        }).catch(function(err) { showToast('Error: ' + err.message); });
+    });
+}
+
 </script>
 
 </body>
