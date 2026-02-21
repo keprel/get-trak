@@ -4279,10 +4279,10 @@ function loadMetrics() {
         html += '<div class="metrics-section">';
         html += '<div class="metrics-section-title">Retention Rates by Regional Manager</div>';
 
-        // Check if any techs have addedAt data
+        // Check if any techs have date data
         var hasAnyTechs = false;
         for (var ri = 0; ri < techs.length; ri++) {
-            if (techs[ri].addedAt) { hasAnyTechs = true; break; }
+            if (techs[ri].startDate || techs[ri].addedAt) { hasAnyTechs = true; break; }
         }
 
         if (!hasAnyTechs && techs.length === 0) {
@@ -4306,9 +4306,9 @@ function loadMetrics() {
                     for (var ti = 0; ti < techs.length; ti++) {
                         var t = techs[ti];
                         if ((t.regionalManager || '') !== rm) continue;
-                        var addedDate = t.addedAt ? (t.addedAt.toDate ? t.addedAt.toDate() : new Date(t.addedAt)) : null;
-                        if (!addedDate) continue;
-                        var daysSinceAdded = Math.floor((now - addedDate) / (1000 * 60 * 60 * 24));
+                        var startDate = t.startDate ? new Date(t.startDate) : (t.addedAt ? (t.addedAt.toDate ? t.addedAt.toDate() : new Date(t.addedAt)) : null);
+                        if (!startDate) continue;
+                        var daysSinceAdded = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
                         if (daysSinceAdded >= period.days) {
                             eligible++;
                             if (t.status !== 'terminated') retained++;
@@ -4331,9 +4331,9 @@ function loadMetrics() {
                 var compRetained = 0;
                 for (var ci = 0; ci < techs.length; ci++) {
                     var ct = techs[ci];
-                    var ctAdded = ct.addedAt ? (ct.addedAt.toDate ? ct.addedAt.toDate() : new Date(ct.addedAt)) : null;
-                    if (!ctAdded) continue;
-                    var ctDays = Math.floor((now - ctAdded) / (1000 * 60 * 60 * 24));
+                    var ctStart = ct.startDate ? new Date(ct.startDate) : (ct.addedAt ? (ct.addedAt.toDate ? ct.addedAt.toDate() : new Date(ct.addedAt)) : null);
+                    if (!ctStart) continue;
+                    var ctDays = Math.floor((now - ctStart) / (1000 * 60 * 60 * 24));
                     if (ctDays >= period.days) {
                         compEligible++;
                         if (ct.status !== 'terminated') compRetained++;
