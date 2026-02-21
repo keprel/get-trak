@@ -66,7 +66,7 @@
     /* Stats */
     .th-stats {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
         margin-bottom: 24px;
     }
@@ -90,7 +90,6 @@
         margin-top: 2px;
     }
     .stat-interview .th-stat-number { color: #2563eb; }
-    .stat-hired .th-stat-number { color: #d97706; }
     .stat-active .th-stat-number { color: #10b981; }
     .stat-terminated .th-stat-number { color: #ef4444; }
 
@@ -183,7 +182,6 @@
         flex-shrink: 0;
     }
     .th-tech-status-interview { background: #eff6ff; color: #2563eb; }
-    .th-tech-status-hired { background: #fffbeb; color: #d97706; }
     .th-tech-status-active { background: #ecfdf5; color: #10b981; }
     .th-tech-status-terminated { background: #fef2f2; color: #ef4444; }
 
@@ -904,12 +902,8 @@
         <div class="th-stat-number">3</div>
         <div class="th-stat-label">Interview</div>
     </div>
-    <div class="th-stat-card stat-hired">
-        <div class="th-stat-number">1</div>
-        <div class="th-stat-label">Hired</div>
-    </div>
     <div class="th-stat-card stat-active">
-        <div class="th-stat-number">4</div>
+        <div class="th-stat-number">5</div>
         <div class="th-stat-label">Active</div>
     </div>
     <div class="th-stat-card stat-terminated">
@@ -922,7 +916,6 @@
 <div class="th-filter-bar">
     <button class="th-filter-chip active">All</button>
     <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Interview</button>
-    <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Hired</button>
     <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Active</button>
     <button class="th-filter-chip" onclick="this.parentElement.querySelector('.active').classList.remove('active');this.classList.add('active')">Terminated</button>
 </div>
@@ -992,7 +985,6 @@
             <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
             <select class="th-status-select">
                 <option selected>Interview</option>
-                <option>Hired</option>
                 <option>Active</option>
                 <option>Terminated</option>
             </select>
@@ -1079,7 +1071,7 @@
     </div>
 </div>
 
-<!-- Card 2: Sarah Lee — Hired, Regional Manager: Scott -->
+<!-- Card 2: Sarah Lee — Active, Regional Manager: Scott -->
 <div class="th-tech-card" onclick="this.classList.toggle('expanded')">
     <div class="th-tech-summary">
         <div class="th-tech-avatar">SL</div>
@@ -1087,7 +1079,7 @@
             <h4>Sarah Lee</h4>
             <div class="th-tech-position">Calibration Specialist</div>
         </div>
-        <span class="th-tech-status th-tech-status-hired">Hired</span>
+        <span class="th-tech-status th-tech-status-active">Active</span>
         <svg class="th-tech-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="th-tech-detail">
@@ -1100,8 +1092,7 @@
             <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
             <select class="th-status-select">
                 <option>Interview</option>
-                <option selected>Hired</option>
-                <option>Active</option>
+                <option selected>Active</option>
                 <option>Terminated</option>
             </select>
         </div>
@@ -1215,7 +1206,6 @@
             <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
             <select class="th-status-select">
                 <option>Interview</option>
-                <option>Hired</option>
                 <option selected>Active</option>
                 <option>Terminated</option>
             </select>
@@ -1321,7 +1311,6 @@
             <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
             <select class="th-status-select">
                 <option>Interview</option>
-                <option>Hired</option>
                 <option>Active</option>
                 <option selected>Terminated</option>
             </select>
@@ -1400,7 +1389,6 @@
             <label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>
             <select class="th-status-select">
                 <option>Interview</option>
-                <option>Hired</option>
                 <option>Active</option>
                 <option selected>Terminated</option>
             </select>

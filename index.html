@@ -1518,7 +1518,6 @@
             margin-top: 2px;
         }
         .th-stat-card.stat-interview .th-stat-number { color: #3b82f6; }
-        .th-stat-card.stat-hired .th-stat-number { color: #d97706; }
         .th-stat-card.stat-active .th-stat-number { color: #10b981; }
         .th-stat-card.stat-terminated .th-stat-number { color: #ef4444; }
 
@@ -1575,7 +1574,6 @@
             flex-shrink: 0;
         }
         .th-tech-status-interview { background: #eff6ff; color: #3b82f6; }
-        .th-tech-status-hired { background: #fffbeb; color: #d97706; }
         .th-tech-status-active { background: #ecfdf5; color: #10b981; }
         .th-tech-status-terminated { background: #fef2f2; color: #ef4444; }
         .th-tech-chevron {
@@ -2449,7 +2447,6 @@
             <div class="th-filter-bar" id="th-tech-filter-bar" style="margin-bottom:16px">
                 <button class="th-filter-chip active" data-filter="all">All</button>
                 <button class="th-filter-chip" data-filter="interview">Interview</button>
-                <button class="th-filter-chip" data-filter="hired">Hired</button>
                 <button class="th-filter-chip" data-filter="active">Active</button>
                 <button class="th-filter-chip" data-filter="terminated">Terminated</button>
             </div>
@@ -4114,13 +4111,13 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
 
 // --- Normalize legacy statuses ---
 function normalizeTechStatus(status) {
-    if (status === 'onboarding') return 'hired';
+    if (status === 'onboarding') return 'active';
+    if (status === 'hired') return 'active';
     if (status === 'inactive') return 'terminated';
     return status || 'interview';
 }
 function techStatusLabel(status) {
     if (status === 'interview') return 'Interview';
-    if (status === 'hired') return 'Hired';
     if (status === 'active') return 'Active';
     if (status === 'terminated') return 'Terminated';
     return status;
@@ -4136,7 +4133,7 @@ function loadTechnicians() {
     listEl.innerHTML = '<div class="th-loading"><div class="th-spinner"></div><p style="font-size:13px;color:var(--gray);animation:none;max-width:none">Loading technicians...</p></div>';
 
     db.collection('technicians').orderBy('addedAt', 'desc').get().then(function(snap) {
-        var counts = { interview: 0, hired: 0, active: 0, terminated: 0 };
+        var counts = { interview: 0, active: 0, terminated: 0 };
         var techs = [];
         snap.forEach(function(doc) {
             var d = doc.data();
@@ -4161,7 +4158,6 @@ function loadTechnicians() {
         statsEl.innerHTML =
             '<div class="th-stat-card"><div class="th-stat-number">' + total + '</div><div class="th-stat-label">Total</div></div>' +
             '<div class="th-stat-card stat-interview"><div class="th-stat-number">' + counts.interview + '</div><div class="th-stat-label">Interview</div></div>' +
-            '<div class="th-stat-card stat-hired"><div class="th-stat-number">' + counts.hired + '</div><div class="th-stat-label">Hired</div></div>' +
             '<div class="th-stat-card stat-active"><div class="th-stat-number">' + counts.active + '</div><div class="th-stat-label">Active</div></div>';
 
         // Filter
@@ -4216,8 +4212,8 @@ function loadTechnicians() {
             html += '<div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
             html += '<label style="font-size:13px;font-weight:600;color:var(--dark)">Status:</label>';
             html += '<select class="th-status-select" onchange="changeTechStatus(\'' + t._id + '\',this.value,this)">';
-            var statuses = ['interview','hired','active','terminated'];
-            var statusLabels = ['Interview','Hired','Active','Terminated'];
+            var statuses = ['interview','active','terminated'];
+            var statusLabels = ['Interview','Active','Terminated'];
             for (var si = 0; si < statuses.length; si++) {
                 html += '<option value="' + statuses[si] + '"' + (t.status === statuses[si] ? ' selected' : '') + '>' + statusLabels[si] + '</option>';
             }
