@@ -2334,14 +2334,6 @@ auth.onAuthStateChanged(function(user) {
     if (user) {
         document.getElementById('techhub-user-email').textContent = user.email;
     }
-    // Auto-open Technician Hub if #techhub is in the URL
-    if (window.location.hash === '#techhub') {
-        if (user) {
-            openTechHub();
-        } else {
-            showLoginModal();
-        }
-    }
 });
 
 // Open password modal (Mapper only now)
