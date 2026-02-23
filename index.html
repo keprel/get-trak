@@ -1910,6 +1910,19 @@
             border-radius: 4px;
         }
         .th-template-item button:hover { color: #ef4444; background: #fef2f2; }
+        .th-trigger-days-input {
+            width: 60px;
+            padding: 4px 6px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: inherit;
+            text-align: center;
+            outline: none;
+            color: var(--dark);
+        }
+        .th-trigger-days-input:focus { border-color: var(--red); }
+        .th-trigger-days-input::placeholder { color: #9ca3af; font-size: 11px; }
         .th-template-add {
             display: flex;
             gap: 8px;
@@ -1942,6 +1955,123 @@
             gap: 8px;
             justify-content: flex-end;
         }
+        /* Notification Bell Button */
+        .th-notif-bell-btn {
+            background: none;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 8px;
+            cursor: pointer;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            transition: all 0.15s;
+        }
+        .th-notif-bell-btn:hover { border-color: var(--red); color: var(--red); }
+        /* Notification Settings Overlay */
+        .th-notif-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            backdrop-filter: blur(2px);
+        }
+        .th-notif-overlay.active { display: flex; }
+        .th-notif-box {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 540px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .th-notif-box h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        .th-notif-box > p {
+            font-size: 13px;
+            color: var(--gray);
+            margin-bottom: 20px;
+            line-height: 1.5;
+            max-width: none;
+            text-align: left;
+        }
+        .th-notif-section {
+            margin-bottom: 18px;
+        }
+        .th-notif-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+        .th-notif-select, .th-notif-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            color: var(--dark);
+        }
+        .th-notif-select:focus, .th-notif-input:focus { border-color: var(--red); }
+        .th-notif-toggles {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .th-notif-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--dark);
+            cursor: pointer;
+        }
+        .th-notif-toggle input[type="checkbox"] {
+            accent-color: var(--red);
+            width: 16px;
+            height: 16px;
+        }
+        .th-notif-rm-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .th-notif-rm-row span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            min-width: 70px;
+        }
+        .th-notif-rm-row input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+        }
+        .th-notif-rm-row input:focus { border-color: var(--red); }
+        .th-notif-history-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 12px;
+            color: var(--gray);
+        }
+        .th-notif-history-item strong { color: var(--dark); font-weight: 600; }
         .th-tech-notes {
             margin-top: 16px;
         }
@@ -2331,6 +2461,9 @@
             <h1>Technician Hub</h1>
         </div>
         <div class="techhub-header-right">
+            <button class="th-notif-bell-btn" id="th-notif-bell-btn" title="Notification Settings" onclick="openNotificationSettings()">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </button>
             <span class="techhub-user-email" id="techhub-user-email"></span>
             <button class="techhub-signout" id="techhub-signout">Sign Out</button>
             <button class="techhub-back" id="techhub-back">Back to Home</button>
@@ -2560,6 +2693,57 @@
         <div class="th-template-actions">
             <button class="th-btn th-btn-primary" id="th-template-save-btn">Save Template</button>
             <button class="th-btn th-btn-secondary" id="th-template-close-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Settings Modal -->
+<div class="th-notif-overlay" id="th-notif-overlay">
+    <div class="th-notif-box">
+        <h3>Notification Settings</h3>
+        <p>Configure email notifications for technician events and checklist reminders.</p>
+
+        <div class="th-notif-section">
+            <label class="th-notif-label">Your RM Identity</label>
+            <select id="th-notif-rm-identity" class="th-notif-select">
+                <option value="">All (receive all notifications)</option>
+                <option value="Brandon">Brandon</option>
+                <option value="Scott">Scott</option>
+                <option value="Tyler">Tyler</option>
+                <option value="Aaron">Aaron</option>
+            </select>
+        </div>
+
+        <div class="th-notif-section">
+            <label class="th-notif-label">Notification Email</label>
+            <input type="email" id="th-notif-email" class="th-notif-input" placeholder="Uses login email if blank">
+        </div>
+
+        <div class="th-notif-section">
+            <label class="th-notif-label">Notification Types</label>
+            <div class="th-notif-toggles">
+                <label class="th-notif-toggle"><input type="checkbox" id="th-notif-checklist" checked><span>Checklist reminders</span></label>
+                <label class="th-notif-toggle"><input type="checkbox" id="th-notif-status" checked><span>Status changes</span></label>
+                <label class="th-notif-toggle"><input type="checkbox" id="th-notif-newtech" checked><span>New technician added</span></label>
+                <label class="th-notif-toggle"><input type="checkbox" id="th-notif-docupload" checked><span>Document uploaded</span></label>
+            </div>
+        </div>
+
+        <div class="th-notif-section">
+            <label class="th-notif-label">RM Email Directory <small style="color:#9ca3af;font-weight:400">(shared)</small></label>
+            <div id="th-notif-rm-emails"></div>
+        </div>
+
+        <div class="th-notif-section">
+            <label class="th-notif-label">Recent Notifications</label>
+            <div id="th-notif-history" style="max-height:200px;overflow-y:auto;font-size:12px;color:var(--gray)">
+                <span>Loading...</span>
+            </div>
+        </div>
+
+        <div class="th-template-actions">
+            <button class="th-btn th-btn-primary" id="th-notif-save-btn" onclick="saveNotificationSettings()">Save Settings</button>
+            <button class="th-btn th-btn-secondary" id="th-notif-close-btn" onclick="closeNotificationSettings()">Close</button>
         </div>
     </div>
 </div>
@@ -2871,6 +3055,8 @@ function openTechHub() {
     document.body.style.overflow = 'hidden';
     // Load the active tab's data
     loadActiveTabData();
+    // Check for due notifications
+    checkDueNotifications();
 }
 
 // === Password Modal (Mapper only) ===
@@ -3938,18 +4124,22 @@ function deleteSop(sopId, storagePath) {
 var thTechFilter = 'all';
 var thTerminateCallback = null;
 var thChecklistTemplate = null; // cached template
+var thChecklistTriggerDays = {}; // map: item label -> days
 
 // --- Checklist Template ---
 function loadChecklistTemplate() {
     return db.collection('settings').doc('checklist-template').get().then(function(doc) {
         if (doc.exists && doc.data().items) {
             thChecklistTemplate = doc.data().items;
+            thChecklistTriggerDays = doc.data().triggerDays || {};
         } else {
             thChecklistTemplate = [];
+            thChecklistTriggerDays = {};
         }
         return thChecklistTemplate;
     }).catch(function() {
         thChecklistTemplate = [];
+        thChecklistTriggerDays = {};
         return thChecklistTemplate;
     });
 }
@@ -4040,6 +4230,18 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
         btn.disabled = false;
         btn.textContent = 'Add Technician';
         loadTechnicians();
+        // Send new technician notification
+        sendEventNotification('new-technician', { name: name, regionalManager: rmValue },
+            'New Technician Added: ' + name,
+            buildEventEmail('New Technician Added', [
+                ['Name', name],
+                ['Position', position || 'Not specified'],
+                ['Regional Manager', rmValue || 'Not assigned'],
+                ['Role', roleValue || 'Technician'],
+                ['Added By', thUser ? thUser.email : 'Unknown']
+            ]),
+            'New technician ' + name + ' has been added to Technician Hub.'
+        );
     }).catch(function(err) {
         showToast('Error: ' + err.message);
         btn.disabled = false;
@@ -4495,6 +4697,23 @@ function changeTechStatus(techId, newStatus, selectEl) {
     }).then(function() {
         showToast('Status updated');
         loadTechnicians();
+        // Send status change notification
+        db.collection('technicians').doc(techId).get().then(function(doc) {
+            if (!doc.exists) return;
+            var t = doc.data();
+            t._id = doc.id;
+            var statusLabel = techStatusLabel(newStatus);
+            sendEventNotification('status-change', t,
+                t.name + ' — Status changed to ' + statusLabel,
+                buildEventEmail('Status Change', [
+                    ['Technician', t.name],
+                    ['New Status', statusLabel],
+                    ['Regional Manager', t.regionalManager || 'Not assigned'],
+                    ['Changed By', thUser ? thUser.email : 'Unknown']
+                ]),
+                t.name + ' status changed to ' + statusLabel
+            );
+        });
     }).catch(function(err) {
         showToast('Error: ' + err.message);
     });
@@ -4541,6 +4760,23 @@ function openTerminateDialog(techId, selectEl) {
         }).then(function() {
             showToast('Technician terminated');
             loadTechnicians();
+            // Send termination notification
+            db.collection('technicians').doc(techId).get().then(function(doc) {
+                if (!doc.exists) return;
+                var t = doc.data();
+                t._id = doc.id;
+                sendEventNotification('termination', t,
+                    t.name + ' — Terminated (' + type + ')',
+                    buildEventEmail('Technician Terminated', [
+                        ['Technician', t.name],
+                        ['Type', type],
+                        ['Reason', reason || 'No reason given'],
+                        ['Regional Manager', t.regionalManager || 'Not assigned'],
+                        ['Terminated By', thUser ? thUser.email : 'Unknown']
+                    ]),
+                    t.name + ' has been terminated (' + type + '). Reason: ' + (reason || 'None')
+                );
+            });
         }).catch(function(err) {
             showToast('Error: ' + err.message);
         });
@@ -4679,6 +4915,22 @@ function handleTechDocFile(techId, input) {
             progressEl.innerHTML = '';
             input.value = '';
             loadTechDocuments(techId);
+            // Send document upload notification
+            db.collection('technicians').doc(techId).get().then(function(doc) {
+                if (!doc.exists) return;
+                var t = doc.data();
+                t._id = doc.id;
+                sendEventNotification('document-uploaded', t,
+                    'Document Uploaded for ' + t.name + ': ' + file.name,
+                    buildEventEmail('Document Uploaded', [
+                        ['Technician', t.name],
+                        ['File Name', file.name],
+                        ['Regional Manager', t.regionalManager || 'Not assigned'],
+                        ['Uploaded By', thUser ? thUser.email : 'Unknown']
+                    ]),
+                    'A document (' + file.name + ') was uploaded for ' + t.name
+                );
+            });
         }).catch(function(err) {
             showToast('Error: ' + err.message);
             progressEl.innerHTML = '';
@@ -4788,16 +5040,32 @@ function renderTemplateItems(items) {
     }
     var html = '';
     for (var i = 0; i < items.length; i++) {
+        var days = thChecklistTriggerDays[items[i]] || '';
         html += '<div class="th-template-item" data-index="' + i + '">';
         html += '<span>' + thEscape(items[i]) + '</span>';
+        html += '<input type="number" min="1" class="th-trigger-days-input" placeholder="days" title="Remind after X days" value="' + days + '" onchange="setTriggerDays(' + i + ',this.value)">';
         html += '<button onclick="removeTemplateItem(' + i + ')" title="Remove">&times;</button>';
         html += '</div>';
     }
     container.innerHTML = html;
 }
 
+function setTriggerDays(index, value) {
+    if (!thChecklistTemplate || !thChecklistTemplate[index]) return;
+    var label = thChecklistTemplate[index];
+    if (value && parseInt(value) > 0) {
+        thChecklistTriggerDays[label] = parseInt(value);
+    } else {
+        delete thChecklistTriggerDays[label];
+    }
+}
+
 function removeTemplateItem(index) {
     if (!thChecklistTemplate) return;
+    var label = thChecklistTemplate[index];
+    if (label && thChecklistTriggerDays[label]) {
+        delete thChecklistTriggerDays[label];
+    }
     thChecklistTemplate.splice(index, 1);
     renderTemplateItems(thChecklistTemplate);
 }
@@ -4825,7 +5093,8 @@ document.getElementById('th-template-save-btn').addEventListener('click', functi
 
 function saveChecklistTemplate() {
     var items = thChecklistTemplate || [];
-    db.collection('settings').doc('checklist-template').set({ items: items }).then(function() {
+    var triggerDays = thChecklistTriggerDays || {};
+    db.collection('settings').doc('checklist-template').set({ items: items, triggerDays: triggerDays }).then(function() {
         showToast('Checklist template saved');
         document.getElementById('th-template-overlay').classList.remove('active');
     }).catch(function(err) {
@@ -4838,6 +5107,349 @@ document.getElementById('th-template-close-btn').addEventListener('click', funct
     // Reload template in case user made changes but didn't save
     loadChecklistTemplate();
 });
+
+// ============================================================
+// === EMAIL NOTIFICATIONS ===
+// ============================================================
+
+var thNotifConfig = null; // cached global config
+var thUserPrefs = null;   // cached user preferences
+var RM_NAMES = ['Brandon', 'Scott', 'Tyler', 'Aaron'];
+
+// --- Notification Settings UI ---
+function openNotificationSettings() {
+    var overlay = document.getElementById('th-notif-overlay');
+    overlay.classList.add('active');
+    loadNotificationSettings();
+}
+
+function closeNotificationSettings() {
+    document.getElementById('th-notif-overlay').classList.remove('active');
+}
+
+function loadNotificationSettings() {
+    if (!thUser) return;
+    var uid = thUser.uid;
+
+    // Load user preferences and global config in parallel
+    Promise.all([
+        db.collection('user-preferences').doc(uid).get(),
+        db.collection('settings').doc('notification-config').get()
+    ]).then(function(results) {
+        var userDoc = results[0];
+        var configDoc = results[1];
+
+        // Populate user prefs
+        var prefs = userDoc.exists ? userDoc.data() : {};
+        thUserPrefs = prefs;
+        document.getElementById('th-notif-rm-identity').value = prefs.regionalManager || '';
+        document.getElementById('th-notif-email').value = prefs.notificationEmail || '';
+        var notifs = prefs.notifications || {};
+        document.getElementById('th-notif-checklist').checked = notifs.checklist !== false;
+        document.getElementById('th-notif-status').checked = notifs.status !== false;
+        document.getElementById('th-notif-newtech').checked = notifs.newtech !== false;
+        document.getElementById('th-notif-docupload').checked = notifs.docupload !== false;
+
+        // Populate RM email directory
+        var config = configDoc.exists ? configDoc.data() : {};
+        thNotifConfig = config;
+        var rmEmails = config.rmEmailMap || {};
+        var emailHtml = '';
+        for (var i = 0; i < RM_NAMES.length; i++) {
+            var rm = RM_NAMES[i];
+            emailHtml += '<div class="th-notif-rm-row">';
+            emailHtml += '<span>' + thEscape(rm) + '</span>';
+            emailHtml += '<input type="email" id="th-notif-rm-email-' + rm + '" placeholder="' + rm.toLowerCase() + '@company.com" value="' + thEscape(rmEmails[rm] || '') + '">';
+            emailHtml += '</div>';
+        }
+        document.getElementById('th-notif-rm-emails').innerHTML = emailHtml;
+
+        // Load notification history
+        loadNotificationHistory();
+    }).catch(function(err) {
+        showToast('Error loading settings: ' + err.message);
+    });
+}
+
+function saveNotificationSettings() {
+    if (!thUser) return;
+    var uid = thUser.uid;
+
+    var userPrefs = {
+        regionalManager: document.getElementById('th-notif-rm-identity').value,
+        notificationEmail: document.getElementById('th-notif-email').value.trim(),
+        notifications: {
+            checklist: document.getElementById('th-notif-checklist').checked,
+            status: document.getElementById('th-notif-status').checked,
+            newtech: document.getElementById('th-notif-newtech').checked,
+            docupload: document.getElementById('th-notif-docupload').checked
+        }
+    };
+
+    // Build RM email map
+    var rmEmailMap = {};
+    for (var i = 0; i < RM_NAMES.length; i++) {
+        var rm = RM_NAMES[i];
+        var emailInput = document.getElementById('th-notif-rm-email-' + rm);
+        if (emailInput && emailInput.value.trim()) {
+            rmEmailMap[rm] = emailInput.value.trim();
+        }
+    }
+
+    var configUpdate = {
+        rmEmailMap: rmEmailMap,
+        enabled: true
+    };
+
+    Promise.all([
+        db.collection('user-preferences').doc(uid).set(userPrefs, { merge: true }),
+        db.collection('settings').doc('notification-config').set(configUpdate, { merge: true })
+    ]).then(function() {
+        thUserPrefs = userPrefs;
+        thNotifConfig = Object.assign(thNotifConfig || {}, configUpdate);
+        showToast('Notification settings saved');
+    }).catch(function(err) {
+        showToast('Error saving settings: ' + err.message);
+    });
+}
+
+// --- Notification History ---
+function loadNotificationHistory() {
+    if (!thUser) return;
+    var historyEl = document.getElementById('th-notif-history');
+    var email = thUser.email;
+    db.collection('sent-notifications')
+        .where('recipientEmail', '==', email)
+        .orderBy('sentAt', 'desc')
+        .limit(20)
+        .get()
+        .then(function(snap) {
+            if (snap.empty) {
+                historyEl.innerHTML = '<div style="padding:8px 0;color:#9ca3af">No notifications sent yet.</div>';
+                return;
+            }
+            var html = '';
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                var date = d.sentAt ? d.sentAt.toDate().toLocaleDateString() + ' ' + d.sentAt.toDate().toLocaleTimeString() : 'Unknown';
+                html += '<div class="th-notif-history-item">';
+                html += '<strong>' + thEscape(d.type || 'notification') + '</strong>';
+                if (d.technicianId) html += ' &mdash; ' + thEscape(d.technicianName || d.technicianId);
+                if (d.checklistLabel) html += ': ' + thEscape(d.checklistLabel);
+                html += '<div style="font-size:11px;color:#9ca3af">' + date + '</div>';
+                html += '</div>';
+            });
+            historyEl.innerHTML = html;
+        })
+        .catch(function(err) {
+            historyEl.innerHTML = '<div style="padding:8px 0;color:#ef4444">Error loading history. Index may need to be created.</div>';
+        });
+}
+
+// --- Time-Based Notification Engine ---
+function checkDueNotifications() {
+    if (!thUser) return;
+
+    var uid = thUser.uid;
+    // Load everything in parallel
+    Promise.all([
+        db.collection('user-preferences').doc(uid).get(),
+        db.collection('settings').doc('notification-config').get(),
+        db.collection('settings').doc('checklist-template').get(),
+        db.collection('technicians').get()
+    ]).then(function(results) {
+        var prefsDoc = results[0];
+        var configDoc = results[1];
+        var templateDoc = results[2];
+        var techSnap = results[3];
+
+        var prefs = prefsDoc.exists ? prefsDoc.data() : null;
+        var config = configDoc.exists ? configDoc.data() : {};
+        thNotifConfig = config;
+
+        // Skip if system disabled or user hasn't configured
+        if (!config.enabled) return;
+        if (!prefs) return;
+        if (prefs.notifications && prefs.notifications.checklist === false) return;
+
+        var triggerDays = templateDoc.exists ? (templateDoc.data().triggerDays || {}) : {};
+        if (Object.keys(triggerDays).length === 0) return;
+
+        var rmEmailMap = config.rmEmailMap || {};
+        var userRM = prefs.regionalManager || '';
+        var userEmail = prefs.notificationEmail || thUser.email;
+
+        var now = new Date();
+        var promises = [];
+
+        techSnap.forEach(function(doc) {
+            var t = doc.data();
+            t._id = doc.id;
+            var status = t.status;
+            if (status === 'onboarding') status = 'active';
+            if (status === 'hired') status = 'active';
+
+            // Only active technicians with a start date
+            if (status !== 'active' || !t.startDate) return;
+
+            // Filter by RM if user selected one
+            if (userRM && t.regionalManager !== userRM) return;
+
+            var startDate = new Date(t.startDate);
+            var daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+
+            var checklist = t.checklist || [];
+            for (var ci = 0; ci < checklist.length; ci++) {
+                var item = checklist[ci];
+                if (item.completed) continue;
+
+                var label = item.label;
+                var trigger = triggerDays[label];
+                if (!trigger) continue;
+
+                // Check if past due
+                if (daysSinceStart < trigger) continue;
+
+                // Determine recipient email
+                var recipientEmail = '';
+                if (t.regionalManager && rmEmailMap[t.regionalManager]) {
+                    recipientEmail = rmEmailMap[t.regionalManager];
+                } else {
+                    recipientEmail = userEmail;
+                }
+
+                // Queue dedup check + send
+                promises.push(sendChecklistReminder(t, label, trigger, daysSinceStart, recipientEmail));
+            }
+        });
+
+        if (promises.length > 0) {
+            Promise.all(promises).then(function(results) {
+                var sent = results.filter(function(r) { return r; }).length;
+                if (sent > 0) {
+                    showToast(sent + ' notification' + (sent > 1 ? 's' : '') + ' sent');
+                }
+            });
+        }
+    }).catch(function(err) {
+        console.error('Notification check failed:', err);
+    });
+}
+
+function sendChecklistReminder(tech, label, triggerDays, daysSinceStart, recipientEmail) {
+    if (!recipientEmail) return Promise.resolve(false);
+
+    var dedupKey = tech._id + '_' + label;
+    // Check sent-notifications for dedup
+    return db.collection('sent-notifications')
+        .where('dedupKey', '==', dedupKey)
+        .limit(1)
+        .get()
+        .then(function(snap) {
+            if (!snap.empty) return false; // Already sent
+
+            var emailHtml = buildChecklistReminderEmail(tech, label, triggerDays, daysSinceStart);
+
+            // Write to mail collection for Firebase extension
+            return db.collection('mail').add({
+                to: [recipientEmail],
+                message: {
+                    subject: 'Checklist Reminder: ' + label + ' — ' + tech.name,
+                    html: emailHtml,
+                    text: 'Reminder: "' + label + '" is due for ' + tech.name + ' (' + daysSinceStart + ' days since start, trigger was ' + triggerDays + ' days).'
+                }
+            }).then(function() {
+                // Record in sent-notifications
+                return db.collection('sent-notifications').add({
+                    type: 'checklist-reminder',
+                    technicianId: tech._id,
+                    technicianName: tech.name,
+                    checklistLabel: label,
+                    recipientEmail: recipientEmail,
+                    dedupKey: dedupKey,
+                    sentAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }).then(function() {
+                return true;
+            });
+        })
+        .catch(function(err) {
+            console.error('Error sending reminder for', tech.name, label, err);
+            return false;
+        });
+}
+
+function buildChecklistReminderEmail(tech, label, triggerDays, daysSinceStart) {
+    return '<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px">' +
+        '<div style="background:#1a1a2e;color:white;padding:20px 24px;border-radius:12px 12px 0 0">' +
+        '<h2 style="margin:0;font-size:18px">Checklist Reminder</h2>' +
+        '</div>' +
+        '<div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 12px 12px">' +
+        '<p style="font-size:15px;color:#1a1a2e;margin:0 0 16px"><strong>' + thEscape(label) + '</strong> is due for <strong>' + thEscape(tech.name) + '</strong></p>' +
+        '<table style="width:100%;font-size:13px;color:#4b5563;border-collapse:collapse">' +
+        '<tr><td style="padding:6px 0;font-weight:600">Technician</td><td style="padding:6px 0">' + thEscape(tech.name) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;font-weight:600">Regional Manager</td><td style="padding:6px 0">' + thEscape(tech.regionalManager || 'Not assigned') + '</td></tr>' +
+        '<tr><td style="padding:6px 0;font-weight:600">Start Date</td><td style="padding:6px 0">' + thEscape(tech.startDate) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;font-weight:600">Days Active</td><td style="padding:6px 0">' + daysSinceStart + ' days</td></tr>' +
+        '<tr><td style="padding:6px 0;font-weight:600">Trigger</td><td style="padding:6px 0">After ' + triggerDays + ' days</td></tr>' +
+        '</table>' +
+        '<p style="font-size:12px;color:#9ca3af;margin:16px 0 0;border-top:1px solid #f3f4f6;padding-top:12px">Sent from Technician Hub</p>' +
+        '</div></div>';
+}
+
+// --- Event-Based Notification Helpers ---
+function sendEventNotification(type, tech, subject, bodyHtml, bodyText) {
+    if (!thNotifConfig) {
+        return db.collection('settings').doc('notification-config').get().then(function(doc) {
+            thNotifConfig = doc.exists ? doc.data() : {};
+            return _doSendEventNotification(type, tech, subject, bodyHtml, bodyText);
+        });
+    }
+    return _doSendEventNotification(type, tech, subject, bodyHtml, bodyText);
+}
+
+function _doSendEventNotification(type, tech, subject, bodyHtml, bodyText) {
+    if (!thNotifConfig || !thNotifConfig.enabled) return Promise.resolve();
+
+    var rmEmailMap = thNotifConfig.rmEmailMap || {};
+    var recipientEmail = tech.regionalManager ? rmEmailMap[tech.regionalManager] : null;
+    if (!recipientEmail) return Promise.resolve();
+
+    // Check recipient RM's preferences (best effort — skip if no prefs doc)
+    return db.collection('mail').add({
+        to: [recipientEmail],
+        message: {
+            subject: subject,
+            html: bodyHtml,
+            text: bodyText
+        }
+    }).then(function() {
+        return db.collection('sent-notifications').add({
+            type: type,
+            technicianId: tech._id || tech.id || '',
+            technicianName: tech.name || '',
+            recipientEmail: recipientEmail,
+            sentAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }).catch(function(err) {
+        console.error('Event notification failed:', err);
+    });
+}
+
+function buildEventEmail(title, details) {
+    var rows = '';
+    for (var i = 0; i < details.length; i++) {
+        rows += '<tr><td style="padding:6px 0;font-weight:600">' + thEscape(details[i][0]) + '</td><td style="padding:6px 0">' + thEscape(details[i][1]) + '</td></tr>';
+    }
+    return '<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px">' +
+        '<div style="background:#1a1a2e;color:white;padding:20px 24px;border-radius:12px 12px 0 0">' +
+        '<h2 style="margin:0;font-size:18px">' + thEscape(title) + '</h2>' +
+        '</div>' +
+        '<div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 12px 12px">' +
+        '<table style="width:100%;font-size:13px;color:#4b5563;border-collapse:collapse">' + rows + '</table>' +
+        '<p style="font-size:12px;color:#9ca3af;margin:16px 0 0;border-top:1px solid #f3f4f6;padding-top:12px">Sent from Technician Hub</p>' +
+        '</div></div>';
+}
 
 </script>
 
