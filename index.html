@@ -2207,7 +2207,7 @@
         .th-onboarding-badge.none { background: #f3f4f6; color: var(--gray); }
 
         /* Executive Dashboard */
-        .metrics-exec-cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
+        .metrics-exec-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
         .metrics-exec-cards .metrics-card { position: relative; padding: 16px 14px; }
         .metrics-exec-cards .metrics-card-number { font-size: 24px; }
         .metrics-exec-cards .metrics-card-label { font-size: 11px; }
@@ -4665,8 +4665,6 @@ function loadMetrics() {
         html += '<div class="metrics-exec-cards">';
         html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#059669">' + activeOnlyList.length + '</div><div class="metrics-card-label">Active Techs</div></div>';
         html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#2563eb">' + interviewList.length + '</div><div class="metrics-card-label">In Interview</div></div>';
-        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#ef4444">' + termedThisMonth + '</div><div class="metrics-card-label">Termed This Month</div></div>';
-        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#dc2626">' + termedThisQuarter + '</div><div class="metrics-card-label">Termed This Quarter</div></div>';
         var netColor = netChange >= 0 ? '#059669' : '#ef4444';
         var netPrefix = netChange >= 0 ? '+' : '';
         html += '<div class="metrics-card"><div class="metrics-card-number" style="color:' + netColor + '">' + netPrefix + netChange + '</div><div class="metrics-card-label">Net Change (Month)</div></div>';
@@ -4897,7 +4895,9 @@ function loadMetrics() {
 
         html += '<div class="metrics-section">';
         html += '<div class="metrics-section-title">Attrition Rates (Last 12 Months)</div>';
-        html += '<div class="attrition-cards">';
+        html += '<div class="attrition-cards" style="grid-template-columns:repeat(4,1fr)">';
+        html += '<div class="attrition-card"><div class="attrition-card-number" style="color:#ef4444">' + termedThisMonth + '</div><div class="attrition-card-label">Terminated This Month</div></div>';
+        html += '<div class="attrition-card"><div class="attrition-card-number" style="color:#dc2626">' + termedThisQuarter + '</div><div class="attrition-card-label">Terminated This Quarter</div></div>';
         html += '<div class="attrition-card attrition-quit"><div class="attrition-card-number">' + quitPct + '%</div><div class="attrition-card-label">Voluntary (Quit)</div></div>';
         html += '<div class="attrition-card attrition-fired"><div class="attrition-card-number">' + firedPct + '%</div><div class="attrition-card-label">Involuntary (Fired)</div></div>';
         html += '</div>';
