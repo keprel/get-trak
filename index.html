@@ -6247,60 +6247,91 @@ var shDrawerChart = null;
 
 var salesHubSection = document.getElementById('saleshub-section');
 
-// --- Mock Data (seeded random for deterministic output) ---
-function shSeed(s) {
-    return function() {
-        s = (s * 16807 + 0) % 2147483647;
-        return (s - 1) / 2147483646;
-    };
+// --- Spotio API Data (via trak-agent proxy) ---
+// Trak Agent proxy URL - uses localhost when running locally
+var SH_TRAK_AGENT = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8742'
+    : 'http://127.0.0.1:8742'; // TODO: update to hosted proxy URL when deployed
+var SH_REPS = [];
+var SH_ACCOUNTS = [];
+var SH_LEADS = [];
+var SH_STAGES = {};
+var SH_TERRITORIES = {};
+var SH_USER_MAP = {};
+var SH_LEAD_MAP = {};
+
+function shFetchSpotioData() {
+    return fetch(SH_TRAK_AGENT + '/api/spotio/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) throw new Error(data.error);
+            // Build user map and reps list (only active sales + manager roles)
+            SH_USER_MAP = {};
+            SH_REPS = [];
+            for (var i = 0; i < data.users.length; i++) {
+                var u = data.users[i];
+                SH_USER_MAP[u.id] = u;
+                if (u.status === 'active' && (u.role === 'sales' || u.role === 'manager' || u.role === 'admin')) {
+                    SH_REPS.push({ id: u.id, name: u.firstName + ' ' + u.lastName, territory: '', email: u.email, role: u.role });
+                }
+            }
+            // Build territory map and assign to reps
+            SH_TERRITORIES = {};
+            for (var t = 0; t < data.territories.length; t++) {
+                var terr = data.territories[t];
+                SH_TERRITORIES[terr.id] = terr;
+                if (terr.userIds) {
+                    for (var tu = 0; tu < terr.userIds.length; tu++) {
+                        for (var ri = 0; ri < SH_REPS.length; ri++) {
+                            if (SH_REPS[ri].id === terr.userIds[tu] && !SH_REPS[ri].territory) {
+                                SH_REPS[ri].territory = terr.title;
+                            }
+                        }
+                    }
+                }
+            }
+            // Build stages map
+            SH_STAGES = {};
+            for (var s = 0; s < data.stages.length; s++) {
+                SH_STAGES[data.stages[s].id] = data.stages[s];
+            }
+            // Build leads/accounts list and lead map
+            SH_LEADS = data.leads;
+            SH_LEAD_MAP = {};
+            SH_ACCOUNTS = [];
+            for (var l = 0; l < data.leads.length; l++) {
+                var lead = data.leads[l];
+                SH_LEAD_MAP[lead.id] = lead;
+                if (lead.company) SH_ACCOUNTS.push(lead.company);
+            }
+            return data;
+        });
 }
 
-var shRand = shSeed(42);
-
-var SH_REPS = [
-    { id: 'r1', name: 'Marcus Rivera', territory: 'North Texas' },
-    { id: 'r2', name: 'Jordan Ellis', territory: 'Dallas Metro' },
-    { id: 'r3', name: 'Taylor Nguyen', territory: 'Fort Worth' },
-    { id: 'r4', name: 'Casey Brooks', territory: 'South Oklahoma' },
-    { id: 'r5', name: 'Dana Patel', territory: 'East Texas' }
-];
-
-var SH_ACCOUNTS = [
-    'Caliber Collision #142', 'Caliber Collision #287', 'Caliber Collision #305',
-    'Service King - Plano', 'Service King - Arlington', 'Service King - McKinney',
-    'Park Place Dealerships', 'AutoNation Chevy', 'AutoNation Ford',
-    'Joe Hudson\'s #18', 'Joe Hudson\'s #24', 'Sewell BMW',
-    'Hendrick Toyota', 'Classic Chevrolet', 'Crash Champions #112',
-    'Crash Champions #58', 'Gerber Collision - Frisco', 'Gerber Collision - Garland',
-    'Fix Auto - Lewisville', 'ABRA Auto Body'
-];
-
-function shGenerateVisits() {
+function shBuildVisitsFromLeads() {
     var visits = [];
-    var now = new Date();
-    for (var d = 0; d < 30; d++) {
-        var date = new Date(now);
-        date.setDate(date.getDate() - d);
-        var dayOfWeek = date.getDay();
-        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-        var numVisits = Math.floor(shRand() * 8) + 4;
-        for (var v = 0; v < numVisits; v++) {
-            var rep = SH_REPS[Math.floor(shRand() * SH_REPS.length)];
-            var acct = SH_ACCOUNTS[Math.floor(shRand() * SH_ACCOUNTS.length)];
-            var hour = Math.floor(shRand() * 8) + 8;
-            var minute = Math.floor(shRand() * 60);
-            var visitDate = new Date(date);
-            visitDate.setHours(hour, minute, 0, 0);
-            visits.push({
-                repId: rep.id,
-                repName: rep.name,
-                account: acct,
-                date: visitDate,
-                dateStr: visitDate.toISOString().slice(0, 10),
-                duration: Math.floor(shRand() * 45) + 15,
-                type: shRand() > 0.7 ? 'Follow-up' : 'Prospecting'
-            });
-        }
+    for (var i = 0; i < SH_LEADS.length; i++) {
+        var lead = SH_LEADS[i];
+        if (!lead.visitsCount || lead.visitsCount === 0) continue;
+        if (!lead.lastVisitDate) continue;
+        var rep = SH_USER_MAP[lead.ownerId];
+        var repName = rep ? (rep.firstName + ' ' + rep.lastName) : ('User ' + lead.ownerId);
+        var visitDate = new Date(lead.lastVisitDate);
+        var stage = SH_STAGES[lead.stageId];
+        visits.push({
+            repId: lead.ownerId || '',
+            repName: repName,
+            account: lead.company || 'Unknown',
+            leadId: lead.id,
+            date: visitDate,
+            dateStr: visitDate.toISOString().slice(0, 10),
+            duration: 0,
+            type: stage ? stage.title : 'Visit',
+            visitsCount: lead.visitsCount,
+            address: lead.pin ? lead.pin.address : '',
+            stageId: lead.stageId,
+            territoryId: lead.territoryId
+        });
     }
     return visits.sort(function(a, b) { return b.date - a.date; });
 }
@@ -6309,29 +6340,29 @@ function shGenerateVisits() {
 function shComputeRepSummary(visits) {
     var map = {};
     var now = new Date();
-    var todayStr = now.toISOString().slice(0, 10);
     for (var i = 0; i < SH_REPS.length; i++) {
-        map[SH_REPS[i].id] = { rep: SH_REPS[i], total: 0, accounts: {}, lastVisit: null, weeklyMap: {} };
+        map[SH_REPS[i].id] = { rep: SH_REPS[i], total: 0, totalVisits: 0, accounts: {}, lastVisit: null, weeklyMap: {} };
     }
     for (var j = 0; j < visits.length; j++) {
         var v = visits[j];
         if (!map[v.repId]) continue;
         var entry = map[v.repId];
         entry.total++;
-        entry.accounts[v.account] = (entry.accounts[v.account] || 0) + 1;
+        entry.totalVisits += (v.visitsCount || 1);
+        entry.accounts[v.account] = (entry.accounts[v.account] || 0) + (v.visitsCount || 1);
         if (!entry.lastVisit || v.date > entry.lastVisit) entry.lastVisit = v.date;
         var weekNum = Math.floor((now - v.date) / (7 * 86400000));
-        entry.weeklyMap[weekNum] = (entry.weeklyMap[weekNum] || 0) + 1;
+        entry.weeklyMap[weekNum] = (entry.weeklyMap[weekNum] || 0) + (v.visitsCount || 1);
     }
     var result = [];
     for (var id in map) {
         var e = map[id];
         var weekCount = Object.keys(e.weeklyMap).length || 1;
-        var avgWeek = (e.total / weekCount).toFixed(1);
-        var status = e.total >= 20 ? 'On Track' : (e.total >= 10 ? 'Needs Attention' : 'Low Activity');
+        var avgWeek = (e.totalVisits / weekCount).toFixed(1);
+        var status = e.totalVisits >= 20 ? 'On Track' : (e.totalVisits >= 10 ? 'Needs Attention' : 'Low Activity');
         result.push({
             rep: e.rep,
-            total: e.total,
+            total: e.totalVisits,
             accountCount: Object.keys(e.accounts).length,
             accounts: e.accounts,
             lastVisit: e.lastVisit,
@@ -6347,7 +6378,7 @@ function shComputeDailyTotals(visits) {
     var map = {};
     for (var i = 0; i < visits.length; i++) {
         var ds = visits[i].dateStr;
-        map[ds] = (map[ds] || 0) + 1;
+        map[ds] = (map[ds] || 0) + (visits[i].visitsCount || 1);
     }
     var days = Object.keys(map).sort();
     return { labels: days.map(function(d) { return d.slice(5); }), values: days.map(function(d) { return map[d]; }) };
@@ -6357,11 +6388,12 @@ function shComputeAccountSummary(visits) {
     var map = {};
     for (var i = 0; i < visits.length; i++) {
         var v = visits[i];
-        if (!map[v.account]) map[v.account] = { total: 0, lastVisit: null, reps: {} };
+        var vc = v.visitsCount || 1;
+        if (!map[v.account]) map[v.account] = { total: 0, lastVisit: null, reps: {}, leadId: v.leadId, address: v.address, stage: v.type };
         var a = map[v.account];
-        a.total++;
+        a.total += vc;
         if (!a.lastVisit || v.date > a.lastVisit) a.lastVisit = v.date;
-        a.reps[v.repName] = (a.reps[v.repName] || 0) + 1;
+        a.reps[v.repName] = (a.reps[v.repName] || 0) + vc;
     }
     var result = [];
     for (var acct in map) {
@@ -6372,7 +6404,7 @@ function shComputeAccountSummary(visits) {
             if (entry.reps[r] > topCount) { topRep = r; topCount = entry.reps[r]; }
         }
         var freq = entry.total >= 8 ? 'High' : (entry.total >= 4 ? 'Medium' : 'Low');
-        result.push({ account: acct, total: entry.total, lastVisit: entry.lastVisit, topRep: topRep, freq: freq });
+        result.push({ account: acct, total: entry.total, lastVisit: entry.lastVisit, topRep: topRep, freq: freq, leadId: entry.leadId, stage: entry.stage });
     }
     result.sort(function(a, b) { return b.total - a.total; });
     return result;
@@ -6384,10 +6416,11 @@ function shComputeHeatmap(visits, repFilter, accountSearch) {
     var accts = {};
     for (var i = 0; i < visits.length; i++) {
         var v = visits[i];
+        var vc = v.visitsCount || 1;
         if (repFilter !== 'all' && v.repId !== repFilter) continue;
         if (accountSearch && v.account.toLowerCase().indexOf(accountSearch.toLowerCase()) === -1) continue;
         if (!matrix[v.repId]) { matrix[v.repId] = {}; repIds.push(v.repId); }
-        matrix[v.repId][v.account] = (matrix[v.repId][v.account] || 0) + 1;
+        matrix[v.repId][v.account] = (matrix[v.repId][v.account] || 0) + vc;
         accts[v.account] = true;
     }
     return { matrix: matrix, repIds: repIds, accounts: Object.keys(accts).sort() };
@@ -6397,20 +6430,25 @@ function shComputeHeatmap(visits, repFilter, accountSearch) {
 function shRenderKPIs(visits) {
     var todayStr = new Date().toISOString().slice(0, 10);
     var todayCount = 0;
+    var totalVisits = 0;
     var accounts = {};
     var reps = {};
+    var visitedAccounts = 0;
     for (var i = 0; i < visits.length; i++) {
-        if (visits[i].dateStr === todayStr) todayCount++;
+        var vc = visits[i].visitsCount || 1;
+        totalVisits += vc;
+        if (visits[i].dateStr === todayStr) todayCount += vc;
         accounts[visits[i].account] = true;
+        if (vc > 0) visitedAccounts++;
         reps[visits[i].repId] = true;
     }
     var days = {};
     for (var j = 0; j < visits.length; j++) days[visits[j].dateStr] = true;
     var dayCount = Object.keys(days).length || 1;
-    document.getElementById('sh-kpi-total').textContent = visits.length;
+    document.getElementById('sh-kpi-total').textContent = totalVisits;
     document.getElementById('sh-kpi-today').textContent = todayCount;
-    document.getElementById('sh-kpi-accounts').textContent = Object.keys(accounts).length;
-    document.getElementById('sh-kpi-avg').textContent = (visits.length / dayCount).toFixed(1);
+    document.getElementById('sh-kpi-accounts').textContent = visitedAccounts + ' / ' + SH_LEADS.length;
+    document.getElementById('sh-kpi-avg').textContent = (totalVisits / dayCount).toFixed(1);
     document.getElementById('sh-kpi-reps').textContent = Object.keys(reps).length;
 }
 
@@ -6493,8 +6531,9 @@ function shRenderAccountTable(accountSummary) {
     for (var i = 0; i < accountSummary.length; i++) {
         var a = accountSummary[i];
         var freqClass = a.freq === 'High' ? 'sh-badge-green' : (a.freq === 'Medium' ? 'sh-badge-yellow' : 'sh-badge-red');
-        html += '<tr>' +
-            '<td>' + shEscape(a.account) + '</td>' +
+        var clickAttr = a.leadId ? ' onclick="shOpenAccountDrawer(\'' + a.leadId + '\')" style="cursor:pointer"' : '';
+        html += '<tr' + clickAttr + '>' +
+            '<td>' + shEscape(a.account) + (a.stage ? '<br><span style="font-size:11px;color:#6b7280">' + shEscape(a.stage) + '</span>' : '') + '</td>' +
             '<td>' + a.total + '</td>' +
             '<td>' + shFormatDate(a.lastVisit) + '</td>' +
             '<td>' + shEscape(a.topRep) + '</td>' +
@@ -6545,38 +6584,43 @@ function shOpenDrawer(repId) {
     for (var i = 0; i < SH_REPS.length; i++) { if (SH_REPS[i].id === repId) rep = SH_REPS[i]; }
     if (!rep) return;
 
-    var visits = shCurrentVisits.filter(function(v) { return v.repId === repId; });
+    var repLeads = shCurrentVisits.filter(function(v) { return v.repId === repId; });
     var accountMap = {};
-    var dailyMap = {};
-    for (var j = 0; j < visits.length; j++) {
-        var v = visits[j];
-        accountMap[v.account] = (accountMap[v.account] || 0) + 1;
-        dailyMap[v.dateStr] = (dailyMap[v.dateStr] || 0) + 1;
+    var totalVisits = 0;
+    for (var j = 0; j < repLeads.length; j++) {
+        var v = repLeads[j];
+        var vc = v.visitsCount || 1;
+        accountMap[v.account] = (accountMap[v.account] || 0) + vc;
+        totalVisits += vc;
     }
 
     document.getElementById('sh-drawer-name').textContent = rep.name;
-    document.getElementById('sh-drawer-subtitle').textContent = rep.territory;
+    document.getElementById('sh-drawer-subtitle').textContent = rep.territory || rep.email || '';
 
     var uniqueAccts = Object.keys(accountMap).length;
-    var days = Object.keys(dailyMap);
-    var activeDays = days.length;
 
     document.getElementById('sh-drawer-stats').innerHTML =
-        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + visits.length + '</div><div class="sh-drawer-stat-lbl">Visits</div></div>' +
-        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + uniqueAccts + '</div><div class="sh-drawer-stat-lbl">Accounts</div></div>' +
-        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + activeDays + '</div><div class="sh-drawer-stat-lbl">Active Days</div></div>';
+        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + totalVisits + '</div><div class="sh-drawer-stat-lbl">Total Visits</div></div>' +
+        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + repLeads.length + '</div><div class="sh-drawer-stat-lbl">Accounts Assigned</div></div>' +
+        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + uniqueAccts + '</div><div class="sh-drawer-stat-lbl">Accounts Visited</div></div>';
 
-    // Timeline chart
+    // Timeline: use per-lead lastVisitDate
     if (shDrawerChart) shDrawerChart.destroy();
-    var sortedDays = days.sort();
+    var dailyMap = {};
+    for (var d = 0; d < repLeads.length; d++) {
+        if (repLeads[d].visitsCount > 0) {
+            dailyMap[repLeads[d].dateStr] = (dailyMap[repLeads[d].dateStr] || 0) + repLeads[d].visitsCount;
+        }
+    }
+    var sortedDays = Object.keys(dailyMap).sort();
     var ctx = document.getElementById('sh-drawer-chart').getContext('2d');
     shDrawerChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: sortedDays.map(function(d) { return d.slice(5); }),
+            labels: sortedDays.map(function(dd) { return dd.slice(5); }),
             datasets: [{
                 label: 'Visits',
-                data: sortedDays.map(function(d) { return dailyMap[d]; }),
+                data: sortedDays.map(function(dd) { return dailyMap[dd]; }),
                 borderColor: '#60a5fa',
                 backgroundColor: 'rgba(96,165,250,0.1)',
                 fill: true,
@@ -6595,13 +6639,83 @@ function shOpenDrawer(repId) {
         }
     });
 
-    // Account list
+    // Account list sorted by visits
     var sortedAccts = Object.keys(accountMap).sort(function(a, b) { return accountMap[b] - accountMap[a]; });
     var listHtml = '';
     for (var k = 0; k < sortedAccts.length; k++) {
         listHtml += '<li><span>' + shEscape(sortedAccts[k]) + '</span><span>' + accountMap[sortedAccts[k]] + ' visits</span></li>';
     }
     document.getElementById('sh-drawer-accounts').innerHTML = listHtml;
+
+    // Show drawer
+    document.getElementById('sh-drawer-overlay').style.display = 'block';
+    setTimeout(function() {
+        document.getElementById('sh-drawer-overlay').classList.add('active');
+        document.getElementById('sh-drawer').classList.add('open');
+    }, 10);
+}
+
+function shOpenAccountDrawer(leadId) {
+    var lead = SH_LEAD_MAP[leadId];
+    if (!lead) return;
+
+    document.getElementById('sh-drawer-name').textContent = lead.company || 'Unknown';
+    var stage = SH_STAGES[lead.stageId];
+    document.getElementById('sh-drawer-subtitle').textContent = (lead.pin ? lead.pin.address : '') + (stage ? ' | ' + stage.title : '');
+
+    var rep = SH_USER_MAP[lead.ownerId];
+    var repName = rep ? (rep.firstName + ' ' + rep.lastName) : '';
+    document.getElementById('sh-drawer-stats').innerHTML =
+        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + (lead.visitsCount || 0) + '</div><div class="sh-drawer-stat-lbl">Visits</div></div>' +
+        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + shEscape(repName) + '</div><div class="sh-drawer-stat-lbl">Assigned Rep</div></div>' +
+        '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + (stage ? shEscape(stage.title) : '—') + '</div><div class="sh-drawer-stat-lbl">Stage</div></div>';
+
+    // Fetch activities from Spotio
+    if (shDrawerChart) shDrawerChart.destroy();
+    document.getElementById('sh-drawer-accounts').innerHTML = '<li style="color:#6b7280">Loading activities...</li>';
+
+    fetch(SH_TRAK_AGENT + '/api/spotio/lead/' + leadId + '/activities')
+        .then(function(r) { return r.json(); })
+        .then(function(activities) {
+            var listHtml = '';
+            for (var i = 0; i < activities.length; i++) {
+                var act = activities[i];
+                var dateStr = act.date ? new Date(act.date).toLocaleDateString() : '';
+                var actTitle = act.title || act.type || 'Activity';
+                var notes = act.notes ? '<br><span style="font-size:11px;color:#9ca3af">' + shEscape(act.notes.substring(0, 120)) + (act.notes.length > 120 ? '...' : '') + '</span>' : '';
+                var verified = act.verified ? ' <span style="color:#4ade80;font-size:10px">GPS Verified</span>' : '';
+                listHtml += '<li><span>' + shEscape(actTitle) + verified + notes + '</span><span>' + dateStr + '</span></li>';
+            }
+            if (!listHtml) listHtml = '<li style="color:#6b7280">No activities recorded</li>';
+            document.getElementById('sh-drawer-accounts').innerHTML = listHtml;
+
+            // Build timeline from activities
+            var dailyMap = {};
+            for (var j = 0; j < activities.length; j++) {
+                if (activities[j].type === 'event') {
+                    var ds = new Date(activities[j].date).toISOString().slice(0, 10);
+                    dailyMap[ds] = (dailyMap[ds] || 0) + 1;
+                }
+            }
+            var sortedDays = Object.keys(dailyMap).sort();
+            if (sortedDays.length > 0) {
+                var ctx = document.getElementById('sh-drawer-chart').getContext('2d');
+                shDrawerChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sortedDays.map(function(d) { return d.slice(5); }),
+                        datasets: [{ label: 'Visits', data: sortedDays.map(function(d) { return dailyMap[d]; }),
+                            borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.1)', fill: true, tension: 0.3, pointRadius: 3 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                        scales: { x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
+                            y: { beginAtZero: true, ticks: { color: '#9ca3af', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+                });
+            }
+        })
+        .catch(function() {
+            document.getElementById('sh-drawer-accounts').innerHTML = '<li style="color:#f87171">Failed to load activities</li>';
+        });
 
     // Show drawer
     document.getElementById('sh-drawer-overlay').style.display = 'block';
@@ -6640,23 +6754,33 @@ function shFormatDate(d) {
 var shCurrentVisits = [];
 
 function openSalesHub() {
-    shRand = shSeed(42);
-    shCurrentVisits = shGenerateVisits();
     salesHubSection.style.display = 'block';
     document.body.style.overflow = 'hidden';
-
     document.getElementById('saleshub-user-email').textContent = thUser ? thUser.email : '';
 
-    shRenderKPIs(shCurrentVisits);
-    var daily = shComputeDailyTotals(shCurrentVisits);
-    shRenderDailyChart(daily);
-    var repSummary = shComputeRepSummary(shCurrentVisits);
-    shRenderByRepChart(repSummary);
-    shRenderRepTable(repSummary);
-    var accountSummary = shComputeAccountSummary(shCurrentVisits);
-    shRenderAccountTable(accountSummary);
-    shPopulateRepFilter();
-    shRenderHeatmap(shCurrentVisits, 'all', '');
+    // Show loading state
+    document.getElementById('sh-kpi-total').textContent = '...';
+    document.getElementById('sh-kpi-today').textContent = '...';
+    document.getElementById('sh-kpi-accounts').textContent = '...';
+    document.getElementById('sh-kpi-avg').textContent = '...';
+    document.getElementById('sh-kpi-reps').textContent = '...';
+    document.getElementById('sh-rep-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:20px">Loading Spotio data...</td></tr>';
+
+    shFetchSpotioData().then(function() {
+        shCurrentVisits = shBuildVisitsFromLeads();
+        shRenderKPIs(shCurrentVisits);
+        var daily = shComputeDailyTotals(shCurrentVisits);
+        shRenderDailyChart(daily);
+        var repSummary = shComputeRepSummary(shCurrentVisits);
+        shRenderByRepChart(repSummary);
+        shRenderRepTable(repSummary);
+        var accountSummary = shComputeAccountSummary(shCurrentVisits);
+        shRenderAccountTable(accountSummary);
+        shPopulateRepFilter();
+        shRenderHeatmap(shCurrentVisits, 'all', '');
+    }).catch(function(err) {
+        document.getElementById('sh-rep-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171;padding:20px">Failed to load Spotio data: ' + shEscape(err.message) + '<br><span style="font-size:11px;color:#6b7280">Make sure trak-agent is running on port 8742</span></td></tr>';
+    });
 }
 
 function closeSalesHub() {
