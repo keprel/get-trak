@@ -6882,8 +6882,9 @@ function shRenderPipeline() {
     }
     var barHtml = '';
     var legendHtml = '';
-    for (var s = 0; s < SH_STAGE_ORDER.length; s++) {
-        var id = SH_STAGE_ORDER[s];
+    var pipelineOrder = [9, 1, 4, 5, 6, 2, 7, 8, 3]; // Scouting → Intro → Pain Point → Solution Pitch → First Car → Third Car → Process → Retention Risk → Lost
+    for (var s = 0; s < pipelineOrder.length; s++) {
+        var id = pipelineOrder[s];
         var stage = SH_STAGES[id];
         var c = counts[id] || 0;
         if (c === 0) continue;
