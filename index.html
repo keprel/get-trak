@@ -3160,6 +3160,7 @@
             <h1>Sales Hub</h1>
         </div>
         <div class="saleshub-header-right">
+            <span id="sh-last-updated" style="font-size:11px;color:#6b7280;margin-right:12px"></span>
             <span class="saleshub-user-email" id="saleshub-user-email"></span>
             <button class="saleshub-signout" id="saleshub-signout">Sign Out</button>
             <button class="saleshub-back" id="saleshub-back">Back to Home</button>
@@ -6247,11 +6248,7 @@ var shDrawerChart = null;
 
 var salesHubSection = document.getElementById('saleshub-section');
 
-// --- Spotio API Data (via trak-agent proxy) ---
-// Trak Agent proxy URL - uses localhost when running locally
-var SH_TRAK_AGENT = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://127.0.0.1:8742'
-    : 'http://127.0.0.1:8742'; // TODO: update to hosted proxy URL when deployed
+// --- Spotio Data (loaded from static JSON, updated daily at 5pm ET) ---
 var SH_REPS = [];
 var SH_ACCOUNTS = [];
 var SH_LEADS = [];
@@ -6259,12 +6256,17 @@ var SH_STAGES = {};
 var SH_TERRITORIES = {};
 var SH_USER_MAP = {};
 var SH_LEAD_MAP = {};
+var SH_ACTIVITIES = {};
+var SH_EXPORTED_AT = '';
 
 function shFetchSpotioData() {
-    return fetch(SH_TRAK_AGENT + '/api/spotio/data')
-        .then(function(r) { return r.json(); })
+    return fetch('data/spotio.json')
+        .then(function(r) {
+            if (!r.ok) throw new Error('Could not load Spotio data (HTTP ' + r.status + ')');
+            return r.json();
+        })
         .then(function(data) {
-            if (data.error) throw new Error(data.error);
+            SH_EXPORTED_AT = data.exportedAt || '';
             // Build user map and reps list (only active sales + manager roles)
             SH_USER_MAP = {};
             SH_REPS = [];
@@ -6304,6 +6306,8 @@ function shFetchSpotioData() {
                 SH_LEAD_MAP[lead.id] = lead;
                 if (lead.company) SH_ACCOUNTS.push(lead.company);
             }
+            // Load pre-fetched activities
+            SH_ACTIVITIES = data.activities || {};
             return data;
         });
 }
@@ -6670,52 +6674,45 @@ function shOpenAccountDrawer(leadId) {
         '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + shEscape(repName) + '</div><div class="sh-drawer-stat-lbl">Assigned Rep</div></div>' +
         '<div class="sh-drawer-stat"><div class="sh-drawer-stat-val">' + (stage ? shEscape(stage.title) : '—') + '</div><div class="sh-drawer-stat-lbl">Stage</div></div>';
 
-    // Fetch activities from Spotio
+    // Load activities from pre-fetched data
     if (shDrawerChart) shDrawerChart.destroy();
-    document.getElementById('sh-drawer-accounts').innerHTML = '<li style="color:#6b7280">Loading activities...</li>';
+    var activities = SH_ACTIVITIES[leadId] || [];
 
-    fetch(SH_TRAK_AGENT + '/api/spotio/lead/' + leadId + '/activities')
-        .then(function(r) { return r.json(); })
-        .then(function(activities) {
-            var listHtml = '';
-            for (var i = 0; i < activities.length; i++) {
-                var act = activities[i];
-                var dateStr = act.date ? new Date(act.date).toLocaleDateString() : '';
-                var actTitle = act.title || act.type || 'Activity';
-                var notes = act.notes ? '<br><span style="font-size:11px;color:#9ca3af">' + shEscape(act.notes.substring(0, 120)) + (act.notes.length > 120 ? '...' : '') + '</span>' : '';
-                var verified = act.verified ? ' <span style="color:#4ade80;font-size:10px">GPS Verified</span>' : '';
-                listHtml += '<li><span>' + shEscape(actTitle) + verified + notes + '</span><span>' + dateStr + '</span></li>';
-            }
-            if (!listHtml) listHtml = '<li style="color:#6b7280">No activities recorded</li>';
-            document.getElementById('sh-drawer-accounts').innerHTML = listHtml;
+    var listHtml = '';
+    for (var i = 0; i < activities.length; i++) {
+        var act = activities[i];
+        var dateStr = act.date ? new Date(act.date).toLocaleDateString() : '';
+        var actTitle = act.title || act.type || 'Activity';
+        var notes = act.notes ? '<br><span style="font-size:11px;color:#9ca3af">' + shEscape(act.notes.substring(0, 120)) + (act.notes.length > 120 ? '...' : '') + '</span>' : '';
+        var verified = act.verified ? ' <span style="color:#4ade80;font-size:10px">GPS Verified</span>' : '';
+        listHtml += '<li><span>' + shEscape(actTitle) + verified + notes + '</span><span>' + dateStr + '</span></li>';
+    }
+    if (!listHtml) listHtml = '<li style="color:#6b7280">No activities recorded</li>';
+    document.getElementById('sh-drawer-accounts').innerHTML = listHtml;
 
-            // Build timeline from activities
-            var dailyMap = {};
-            for (var j = 0; j < activities.length; j++) {
-                if (activities[j].type === 'event') {
-                    var ds = new Date(activities[j].date).toISOString().slice(0, 10);
-                    dailyMap[ds] = (dailyMap[ds] || 0) + 1;
-                }
-            }
-            var sortedDays = Object.keys(dailyMap).sort();
-            if (sortedDays.length > 0) {
-                var ctx = document.getElementById('sh-drawer-chart').getContext('2d');
-                shDrawerChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: sortedDays.map(function(d) { return d.slice(5); }),
-                        datasets: [{ label: 'Visits', data: sortedDays.map(function(d) { return dailyMap[d]; }),
-                            borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.1)', fill: true, tension: 0.3, pointRadius: 3 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                        scales: { x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
-                            y: { beginAtZero: true, ticks: { color: '#9ca3af', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
-                });
-            }
-        })
-        .catch(function() {
-            document.getElementById('sh-drawer-accounts').innerHTML = '<li style="color:#f87171">Failed to load activities</li>';
+    // Build timeline from activities
+    var dailyMap = {};
+    for (var j = 0; j < activities.length; j++) {
+        if (activities[j].type === 'event') {
+            var ds = new Date(activities[j].date).toISOString().slice(0, 10);
+            dailyMap[ds] = (dailyMap[ds] || 0) + 1;
+        }
+    }
+    var sortedDays = Object.keys(dailyMap).sort();
+    if (sortedDays.length > 0) {
+        var ctx = document.getElementById('sh-drawer-chart').getContext('2d');
+        shDrawerChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sortedDays.map(function(d) { return d.slice(5); }),
+                datasets: [{ label: 'Visits', data: sortedDays.map(function(d) { return dailyMap[d]; }),
+                    borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.1)', fill: true, tension: 0.3, pointRadius: 3 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
+                    y: { beginAtZero: true, ticks: { color: '#9ca3af', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
         });
+    }
 
     // Show drawer
     document.getElementById('sh-drawer-overlay').style.display = 'block';
@@ -6767,6 +6764,11 @@ function openSalesHub() {
     document.getElementById('sh-rep-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6b7280;padding:20px">Loading Spotio data...</td></tr>';
 
     shFetchSpotioData().then(function() {
+        // Show last updated timestamp
+        if (SH_EXPORTED_AT) {
+            var d = new Date(SH_EXPORTED_AT);
+            document.getElementById('sh-last-updated').textContent = 'Data updated: ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        }
         shCurrentVisits = shBuildVisitsFromLeads();
         shRenderKPIs(shCurrentVisits);
         var daily = shComputeDailyTotals(shCurrentVisits);
@@ -6779,7 +6781,7 @@ function openSalesHub() {
         shPopulateRepFilter();
         shRenderHeatmap(shCurrentVisits, 'all', '');
     }).catch(function(err) {
-        document.getElementById('sh-rep-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171;padding:20px">Failed to load Spotio data: ' + shEscape(err.message) + '<br><span style="font-size:11px;color:#6b7280">Make sure trak-agent is running on port 8742</span></td></tr>';
+        document.getElementById('sh-rep-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171;padding:20px">Failed to load Spotio data: ' + shEscape(err.message) + '</td></tr>';
     });
 }
 
