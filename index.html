@@ -2622,7 +2622,50 @@
             .saleshub-header-right { width: 100%; justify-content: flex-end; }
             .saleshub-user-email { display: none; }
             .sh-kpi-row { grid-template-columns: 1fr 1fr; }
+            .sh-attention-row { grid-template-columns: 1fr; }
+            .sh-wonlost-row { grid-template-columns: 1fr 1fr; }
         }
+
+        /* --- Pipeline Funnel --- */
+        .sh-pipeline-bar { display: flex; height: 36px; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+        .sh-pipeline-segment { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; min-width: 2px; transition: width 0.3s; cursor: default; }
+        .sh-pipeline-legend { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+        .sh-pipeline-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #d1d5db; }
+        .sh-pipeline-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+        /* --- Won / Lost Tracker --- */
+        .sh-wonlost-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .sh-wonlost-card { background: #1a1d2e; border: 1px solid #2a2d3a; border-radius: 10px; padding: 18px 20px; text-align: center; }
+        .sh-wonlost-value { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .sh-wonlost-label { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* --- Accounts Needing Attention --- */
+        .sh-attention-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .sh-attention-card { background: #1a1d2e; border: 1px solid #2a2d3a; border-radius: 10px; padding: 18px 20px; }
+        .sh-attention-card h3 { font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 12px 0; }
+        .sh-attention-list { max-height: 350px; overflow-y: auto; }
+        .sh-attention-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1f2233; font-size: 13px; color: #d1d5db; }
+        .sh-attention-item:last-child { border-bottom: none; }
+        .sh-attention-company { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+        .sh-attention-rep { color: #9ca3af; font-size: 12px; width: 60px; text-align: center; flex-shrink: 0; }
+        .sh-attention-stage { color: #9ca3af; font-size: 11px; width: 80px; text-align: right; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sh-days-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
+        .sh-days-green { background: #064e3b; color: #6ee7b7; }
+        .sh-days-yellow { background: #713f12; color: #fcd34d; }
+        .sh-days-red { background: #7f1d1d; color: #fca5a5; }
+        .sh-days-gray { background: #1f2937; color: #9ca3af; }
+
+        /* --- Activity Feed --- */
+        .sh-feed { max-height: 400px; overflow-y: auto; }
+        .sh-feed-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #1f2233; }
+        .sh-feed-item:last-child { border-bottom: none; }
+        .sh-feed-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+        .sh-feed-dot-visit { background: #3b82f6; }
+        .sh-feed-dot-transition { background: #f59e0b; }
+        .sh-feed-dot-note { background: #6b7280; }
+        .sh-feed-text { flex: 1; font-size: 13px; color: #d1d5db; line-height: 1.4; }
+        .sh-feed-text strong { color: #fff; }
+        .sh-feed-time { font-size: 11px; color: #6b7280; flex-shrink: 0; white-space: nowrap; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -3190,6 +3233,42 @@
                 <div class="sh-kpi-value" id="sh-kpi-reps">—</div>
                 <div class="sh-kpi-label">Active Reps</div>
             </div>
+        </div>
+
+        <!-- Pipeline Funnel -->
+        <div class="sh-section-title">Pipeline</div>
+        <div class="sh-chart-card">
+            <div class="sh-pipeline-bar" id="sh-pipeline-bar"></div>
+            <div class="sh-pipeline-legend" id="sh-pipeline-legend"></div>
+        </div>
+
+        <!-- Won / Lost Tracker -->
+        <div class="sh-section-title">Won / Lost (Last 30 Days)</div>
+        <div class="sh-wonlost-row" id="sh-wonlost-kpis"></div>
+        <div class="sh-table-wrap" id="sh-transitions-wrap" style="margin-top:12px">
+            <table class="sh-table" id="sh-transitions-table">
+                <thead><tr><th>Account</th><th>From</th><th>To</th><th>Rep</th><th>Date</th></tr></thead>
+                <tbody id="sh-transitions-tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- Accounts Needing Attention -->
+        <div class="sh-section-title">Accounts Needing Attention</div>
+        <div class="sh-attention-row">
+            <div class="sh-attention-card">
+                <h3 id="sh-untouched-title">Never Visited</h3>
+                <div class="sh-attention-list" id="sh-untouched-list"></div>
+            </div>
+            <div class="sh-attention-card">
+                <h3 id="sh-overdue-title">Overdue (30+ Days)</h3>
+                <div class="sh-attention-list" id="sh-overdue-list"></div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="sh-section-title">Recent Activity</div>
+        <div class="sh-chart-card">
+            <div class="sh-feed" id="sh-activity-feed"></div>
         </div>
 
         <!-- Charts Row -->
@@ -6781,9 +6860,175 @@ function openSalesHub() {
         shRenderAccountTable(accountSummary);
         shPopulateRepFilter();
         shRenderHeatmap(shCurrentVisits, 'all', '');
+        shRenderPipeline();
+        shRenderWonLost();
+        shRenderAttention();
+        shRenderActivityFeed();
     }).catch(function(err) {
         document.getElementById('sh-rep-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#f87171;padding:20px">Failed to load Spotio data: ' + shEscape(err.message) + '</td></tr>';
     });
+}
+
+// --- Pipeline Funnel ---
+function shRenderPipeline() {
+    var counts = {};
+    var total = SH_LEADS.length;
+    for (var i = 0; i < SH_LEADS.length; i++) {
+        var sid = SH_LEADS[i].stageId;
+        counts[sid] = (counts[sid] || 0) + 1;
+    }
+    var barHtml = '';
+    var legendHtml = '';
+    var stageIds = Object.keys(SH_STAGES);
+    for (var s = 0; s < stageIds.length; s++) {
+        var id = stageIds[s];
+        var stage = SH_STAGES[id];
+        var c = counts[id] || 0;
+        if (c === 0) continue;
+        var pct = (c / total * 100);
+        barHtml += '<div class="sh-pipeline-segment" style="width:' + pct.toFixed(1) + '%;background:' + shEscape(stage.color || '#6b7280') + '" title="' + shEscape(stage.title) + ': ' + c + '">' + (pct > 5 ? c : '') + '</div>';
+        legendHtml += '<div class="sh-pipeline-legend-item"><span class="sh-pipeline-legend-dot" style="background:' + shEscape(stage.color || '#6b7280') + '"></span>' + shEscape(stage.title) + ' (' + c + ')</div>';
+    }
+    document.getElementById('sh-pipeline-bar').innerHTML = barHtml;
+    document.getElementById('sh-pipeline-legend').innerHTML = legendHtml;
+}
+
+// --- Won / Lost Tracker ---
+function shRenderWonLost() {
+    var now = new Date();
+    var cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    var transitions = [];
+    var wonCount = 0;
+    var lostCount = 0;
+    var leadIds = Object.keys(SH_ACTIVITIES);
+    for (var i = 0; i < leadIds.length; i++) {
+        var lid = leadIds[i];
+        var acts = SH_ACTIVITIES[lid];
+        for (var j = 0; j < acts.length; j++) {
+            var a = acts[j];
+            if (!a.transition || !a.transition.toStageId) continue;
+            var toStage = SH_STAGES[a.transition.toStageId];
+            if (!toStage) continue;
+            var d = new Date(a.date);
+            if (d < cutoff) continue;
+            if (toStage.stageGroup === 'won' || toStage.stageGroup === 'lost') {
+                var lead = SH_LEAD_MAP[lid];
+                var fromStage = SH_STAGES[a.transition.fromStageId];
+                transitions.push({
+                    company: lead ? (lead.company || 'Unknown') : 'Lead #' + lid,
+                    from: fromStage ? fromStage.title : '—',
+                    to: toStage.title,
+                    toGroup: toStage.stageGroup,
+                    rep: SH_USER_MAP[a.userId] ? (SH_USER_MAP[a.userId].firstName || '') : '—',
+                    date: d
+                });
+                if (toStage.stageGroup === 'won') wonCount++;
+                else lostCount++;
+            }
+        }
+    }
+    var totalWL = wonCount + lostCount;
+    var winRate = totalWL > 0 ? Math.round(wonCount / totalWL * 100) : 0;
+    var netChange = wonCount - lostCount;
+    var kpiHtml = '<div class="sh-wonlost-card"><div class="sh-wonlost-value" style="color:#34d399">' + wonCount + '</div><div class="sh-wonlost-label">Won</div></div>';
+    kpiHtml += '<div class="sh-wonlost-card"><div class="sh-wonlost-value" style="color:#f87171">' + lostCount + '</div><div class="sh-wonlost-label">Lost</div></div>';
+    kpiHtml += '<div class="sh-wonlost-card"><div class="sh-wonlost-value" style="color:#60a5fa">' + winRate + '%</div><div class="sh-wonlost-label">Win Rate</div></div>';
+    kpiHtml += '<div class="sh-wonlost-card"><div class="sh-wonlost-value" style="color:' + (netChange >= 0 ? '#34d399' : '#f87171') + '">' + (netChange >= 0 ? '+' : '') + netChange + '</div><div class="sh-wonlost-label">Net Change</div></div>';
+    document.getElementById('sh-wonlost-kpis').innerHTML = kpiHtml;
+
+    transitions.sort(function(a, b) { return b.date - a.date; });
+    var tbody = '';
+    for (var t = 0; t < transitions.length; t++) {
+        var tr = transitions[t];
+        var toColor = tr.toGroup === 'won' ? '#34d399' : '#f87171';
+        tbody += '<tr><td>' + shEscape(tr.company) + '</td><td>' + shEscape(tr.from) + '</td><td style="color:' + toColor + ';font-weight:600">' + shEscape(tr.to) + '</td><td>' + shEscape(tr.rep) + '</td><td>' + shFormatDate(tr.date) + '</td></tr>';
+    }
+    if (!tbody) tbody = '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:16px">No won/lost transitions in the last 30 days</td></tr>';
+    document.getElementById('sh-transitions-tbody').innerHTML = tbody;
+}
+
+// --- Accounts Needing Attention ---
+function shRenderAttention() {
+    var now = new Date();
+    var untouched = [];
+    var overdue = [];
+    for (var i = 0; i < SH_LEADS.length; i++) {
+        var lead = SH_LEADS[i];
+        var repName = SH_USER_MAP[lead.ownerId] ? (SH_USER_MAP[lead.ownerId].firstName || '—') : '—';
+        var stageName = SH_STAGES[lead.stageId] ? SH_STAGES[lead.stageId].title : '—';
+        if (!lead.visitsCount || lead.visitsCount === 0) {
+            untouched.push({ company: lead.company || 'Unknown', rep: repName, stage: stageName });
+        } else if (lead.lastVisitDate) {
+            var last = new Date(lead.lastVisitDate);
+            var daysSince = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+            if (daysSince >= 30) {
+                overdue.push({ company: lead.company || 'Unknown', rep: repName, stage: stageName, days: daysSince });
+            }
+        }
+    }
+    untouched.sort(function(a, b) { return a.company.localeCompare(b.company); });
+    overdue.sort(function(a, b) { return b.days - a.days; });
+
+    document.getElementById('sh-untouched-title').textContent = 'Never Visited (' + untouched.length + ')';
+    document.getElementById('sh-overdue-title').textContent = 'Overdue 30+ Days (' + overdue.length + ')';
+
+    var uHtml = '';
+    for (var u = 0; u < untouched.length; u++) {
+        var item = untouched[u];
+        uHtml += '<div class="sh-attention-item"><span class="sh-attention-company">' + shEscape(item.company) + '</span><span class="sh-attention-rep">' + shEscape(item.rep) + '</span><span class="sh-days-badge sh-days-gray">Never</span><span class="sh-attention-stage">' + shEscape(item.stage) + '</span></div>';
+    }
+    if (!uHtml) uHtml = '<div style="text-align:center;color:#6b7280;padding:16px">All accounts have been visited</div>';
+    document.getElementById('sh-untouched-list').innerHTML = uHtml;
+
+    var oHtml = '';
+    for (var o = 0; o < overdue.length; o++) {
+        var oi = overdue[o];
+        var cls = oi.days >= 60 ? 'sh-days-red' : 'sh-days-yellow';
+        oHtml += '<div class="sh-attention-item"><span class="sh-attention-company">' + shEscape(oi.company) + '</span><span class="sh-attention-rep">' + shEscape(oi.rep) + '</span><span class="sh-days-badge ' + cls + '">' + oi.days + 'd</span><span class="sh-attention-stage">' + shEscape(oi.stage) + '</span></div>';
+    }
+    if (!oHtml) oHtml = '<div style="text-align:center;color:#6b7280;padding:16px">No overdue accounts</div>';
+    document.getElementById('sh-overdue-list').innerHTML = oHtml;
+}
+
+// --- Recent Activity Feed ---
+function shRenderActivityFeed() {
+    var all = [];
+    var leadIds = Object.keys(SH_ACTIVITIES);
+    for (var i = 0; i < leadIds.length; i++) {
+        var lid = leadIds[i];
+        var acts = SH_ACTIVITIES[lid];
+        for (var j = 0; j < acts.length; j++) {
+            var a = acts[j];
+            a._leadId = lid;
+            all.push(a);
+        }
+    }
+    all.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    var top = all.slice(0, 50);
+
+    var html = '';
+    for (var k = 0; k < top.length; k++) {
+        var act = top[k];
+        var lead = SH_LEAD_MAP[act._leadId];
+        var acctName = lead ? (lead.company || 'Unknown') : 'Lead #' + act._leadId;
+        var rep = SH_USER_MAP[act.userId] ? SH_USER_MAP[act.userId].firstName : '—';
+        var dotClass = 'sh-feed-dot-note';
+        var actionLabel = act.type || 'activity';
+        if (act.type === 'visit' || act.verified) {
+            dotClass = 'sh-feed-dot-visit';
+            actionLabel = 'visited';
+        } else if (act.transition && act.transition.toStageId) {
+            dotClass = 'sh-feed-dot-transition';
+            var toStage = SH_STAGES[act.transition.toStageId];
+            actionLabel = 'moved to ' + (toStage ? toStage.title : 'new stage');
+        }
+        var notes = act.notes ? act.notes : '';
+        if (notes.length > 80) notes = notes.substring(0, 80) + '...';
+        var dateStr = shFormatDate(new Date(act.date));
+        html += '<div class="sh-feed-item"><div class="sh-feed-dot ' + dotClass + '"></div><div class="sh-feed-text"><strong>' + shEscape(rep) + '</strong> ' + shEscape(actionLabel) + ' <strong>' + shEscape(acctName) + '</strong>' + (notes ? '<br><span style="color:#9ca3af">' + shEscape(notes) + '</span>' : '') + '</div><div class="sh-feed-time">' + dateStr + '</div></div>';
+    }
+    if (!html) html = '<div style="text-align:center;color:#6b7280;padding:16px">No recent activity</div>';
+    document.getElementById('sh-activity-feed').innerHTML = html;
 }
 
 function closeSalesHub() {
