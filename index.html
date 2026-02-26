@@ -6332,6 +6332,7 @@ var SH_REPS = [];
 var SH_ACCOUNTS = [];
 var SH_LEADS = [];
 var SH_STAGES = {};
+var SH_STAGE_ORDER = [];
 var SH_TERRITORIES = {};
 var SH_USER_MAP = {};
 var SH_LEAD_MAP = {};
@@ -6372,10 +6373,12 @@ function shFetchSpotioData() {
                     }
                 }
             }
-            // Build stages map
+            // Build stages map (preserve order from API)
             SH_STAGES = {};
+            SH_STAGE_ORDER = [];
             for (var s = 0; s < data.stages.length; s++) {
                 SH_STAGES[data.stages[s].id] = data.stages[s];
+                SH_STAGE_ORDER.push(data.stages[s].id);
             }
             // Build leads/accounts list and lead map
             SH_LEADS = data.leads;
@@ -6879,9 +6882,8 @@ function shRenderPipeline() {
     }
     var barHtml = '';
     var legendHtml = '';
-    var stageIds = Object.keys(SH_STAGES);
-    for (var s = 0; s < stageIds.length; s++) {
-        var id = stageIds[s];
+    for (var s = 0; s < SH_STAGE_ORDER.length; s++) {
+        var id = SH_STAGE_ORDER[s];
         var stage = SH_STAGES[id];
         var c = counts[id] || 0;
         if (c === 0) continue;
