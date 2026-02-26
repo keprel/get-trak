@@ -6267,13 +6267,14 @@ function shFetchSpotioData() {
         })
         .then(function(data) {
             SH_EXPORTED_AT = data.exportedAt || '';
-            // Build user map and reps list (only active sales + manager roles)
+            // Build user map and reps list (tracked reps only)
+            var SH_TRACKED_EMAILS = ['sydney.graft@adas-safe.com', 'derek.davidson@adas-safe.com', 'jesse.starr@adas-safe.com'];
             SH_USER_MAP = {};
             SH_REPS = [];
             for (var i = 0; i < data.users.length; i++) {
                 var u = data.users[i];
                 SH_USER_MAP[u.id] = u;
-                if (u.status === 'active' && (u.role === 'sales' || u.role === 'manager' || u.role === 'admin')) {
+                if (u.status === 'active' && SH_TRACKED_EMAILS.indexOf(u.email.toLowerCase()) !== -1) {
                     SH_REPS.push({ id: u.id, name: u.firstName + ' ' + u.lastName, territory: '', email: u.email, role: u.role });
                 }
             }
