@@ -6922,7 +6922,7 @@ function shRenderWonLost() {
                     from: fromStage ? fromStage.title : '—',
                     to: toStage.title,
                     toGroup: toStage.stageGroup,
-                    rep: SH_USER_MAP[a.userId] ? (SH_USER_MAP[a.userId].firstName || '') : '—',
+                    rep: SH_USER_MAP[a.ownerId] ? (SH_USER_MAP[a.ownerId].firstName || '') : '—',
                     date: d
                 });
                 if (toStage.stageGroup === 'won') wonCount++;
@@ -7014,7 +7014,7 @@ function shRenderActivityFeed() {
         var act = top[k];
         var lead = SH_LEAD_MAP[act._leadId];
         var acctName = lead ? (lead.company || 'Unknown') : 'Lead #' + act._leadId;
-        var rep = SH_USER_MAP[act.userId] ? SH_USER_MAP[act.userId].firstName : '—';
+        var rep = SH_USER_MAP[act.ownerId] ? SH_USER_MAP[act.ownerId].firstName : '—';
         var dotClass = 'sh-feed-dot-note';
         var actionLabel = act.type || 'activity';
         if (act.type === 'visit' || act.verified) {
