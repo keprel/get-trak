@@ -1313,6 +1313,19 @@
         }
         .th-filter-chip:hover { border-color: var(--red); color: var(--red); }
         .th-filter-chip.active { background: #fef2f2; color: var(--red); border-color: var(--red); font-weight: 600; }
+        .th-tech-search {
+            padding: 7px 12px 7px 32px;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            width: 200px;
+            transition: border-color 0.2s, width 0.2s;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") 10px center no-repeat;
+        }
+        .th-tech-search:focus { border-color: var(--red); width: 240px; }
+        .th-tech-search::placeholder { color: #9ca3af; }
 
         /* Item Cards (shared between docs, SOPs) */
         .th-card-list { display: grid; gap: 10px; }
@@ -3026,11 +3039,12 @@
         <!-- Technicians Panel -->
         <div class="techhub-panel active" id="panel-technicians">
             <div class="th-stats" id="th-tech-stats"></div>
-            <div class="th-filter-bar" id="th-tech-filter-bar" style="margin-bottom:16px">
+            <div class="th-filter-bar" id="th-tech-filter-bar" style="margin-bottom:16px;align-items:center">
                 <button class="th-filter-chip active" data-filter="all">All</button>
                 <button class="th-filter-chip" data-filter="interview">Interview</button>
                 <button class="th-filter-chip" data-filter="active">Active</button>
                 <button class="th-filter-chip" data-filter="terminated">Terminated</button>
+                <input type="text" id="th-tech-search" class="th-tech-search" placeholder="Search by name, position, manager..." oninput="filterTechCards(this.value)" style="margin-left:auto">
             </div>
             <div style="margin-bottom:24px;display:flex;gap:10px;flex-wrap:wrap">
                 <button class="th-btn th-btn-primary" id="th-add-tech-btn">Add Technician</button>
@@ -4775,6 +4789,8 @@ for (var fi = 0; fi < techFilterChips.length; fi++) {
         for (var fj = 0; fj < techFilterChips.length; fj++) {
             techFilterChips[fj].classList.toggle('active', techFilterChips[fj].getAttribute('data-filter') === thTechFilter);
         }
+        var searchBox = document.getElementById('th-tech-search');
+        if (searchBox) searchBox.value = '';
         loadTechnicians();
     });
 }
@@ -5016,14 +5032,21 @@ function loadTechnicians() {
                 html += '</div>';
             }
 
-            // Checklist section
-            var onboardPct = checklist.length > 0 ? Math.round((done / checklist.length) * 100) : 0;
-            var onboardClass = onboardPct === 100 ? 'complete' : (onboardPct > 0 ? 'partial' : 'none');
+            // Checklist section — 90+ days auto-ramped
+            var tStartDate = t.startDate ? new Date(t.startDate) : (t.addedAt ? (t.addedAt.toDate ? t.addedAt.toDate() : new Date(t.addedAt)) : null);
+            var tDaysSince = tStartDate ? Math.floor((new Date() - tStartDate) / (1000 * 60 * 60 * 24)) : 0;
+            var isRamped = tDaysSince >= 90;
+            var onboardPct = checklist.length > 0 ? Math.round((done / checklist.length) * 100) : (isRamped ? 100 : 0);
+            var onboardClass = (isRamped || onboardPct === 100) ? 'complete' : (onboardPct > 0 ? 'partial' : 'none');
             html += '<div style="margin-top:16px;border-top:1px solid #f3f4f6;padding-top:16px">';
             html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
             html += '<label style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:0">Checklist (' + done + '/' + checklist.length + ')</label>';
             if (t.status !== 'terminated') {
-                html += '<span class="th-onboarding-badge ' + onboardClass + '">' + onboardPct + '% onboarded</span>';
+                if (isRamped && checklist.length === 0) {
+                    html += '<span class="th-onboarding-badge complete">Ramped</span>';
+                } else {
+                    html += '<span class="th-onboarding-badge ' + onboardClass + '">' + onboardPct + '% onboarded</span>';
+                }
             }
             html += '</div>';
             html += '<ul class="th-checklist">';
@@ -5073,6 +5096,20 @@ function loadTechnicians() {
     }).catch(function(err) {
         listEl.innerHTML = '<div class="th-empty"><h3>Error loading technicians</h3><p>' + thEscape(err.message) + '</p></div>';
     });
+}
+
+// --- Search / Filter Tech Cards (client-side, no re-query) ---
+function filterTechCards(query) {
+    var q = query.toLowerCase().trim();
+    var cards = document.querySelectorAll('#th-tech-list .th-tech-card');
+    for (var i = 0; i < cards.length; i++) {
+        var summary = cards[i].querySelector('.th-tech-summary');
+        var text = summary ? summary.textContent.toLowerCase() : '';
+        // Also check manager/role in the expanded detail
+        var detail = cards[i].querySelector('.th-tech-detail');
+        if (detail) text += ' ' + detail.textContent.toLowerCase();
+        cards[i].style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
+    }
 }
 
 // --- Load Metrics ---
@@ -5151,15 +5188,28 @@ function loadMetrics() {
         }
         var netChange = hiresThisMonth - termedThisMonth;
 
-        // Company avg onboarding %
+        // Company avg onboarding % (90+ days = Ramped / 100%)
         var totalOnboardPct = 0;
         var onboardCount = 0;
+        var rampedCount = 0;
         for (var avi = 0; avi < activeList.length; avi++) {
-            var avCl = activeList[avi].checklist;
-            if (avCl.length > 0) {
+            var avTech = activeList[avi];
+            var avStart = avTech.startDate ? new Date(avTech.startDate) : (avTech.addedAt ? (avTech.addedAt.toDate ? avTech.addedAt.toDate() : new Date(avTech.addedAt)) : null);
+            var avDays = avStart ? Math.floor((now - avStart) / (1000 * 60 * 60 * 24)) : 0;
+            var avCl = avTech.checklist;
+            if (avDays >= 90) {
+                // Auto-ramped: count as 100%
+                totalOnboardPct += 100;
+                onboardCount++;
+                rampedCount++;
+            } else if (avCl.length > 0) {
                 var avDone = 0;
                 for (var avci = 0; avci < avCl.length; avci++) { if (avCl[avci].completed) avDone++; }
                 totalOnboardPct += Math.round((avDone / avCl.length) * 100);
+                onboardCount++;
+            } else {
+                // < 90 days, no checklist = 0%
+                totalOnboardPct += 0;
                 onboardCount++;
             }
         }
@@ -5178,11 +5228,19 @@ function loadMetrics() {
                 rmData[rcRm].total++;
                 if (rcTech.status === 'interview') rmData[rcRm].interview++;
                 else rmData[rcRm].active++;
-                // Onboarding %
-                if (rcTech.checklist.length > 0) {
+                // Onboarding % (90+ days = Ramped / 100%)
+                var rcStartOb = rcTech.startDate ? new Date(rcTech.startDate) : (rcTech.addedAt ? (rcTech.addedAt.toDate ? rcTech.addedAt.toDate() : new Date(rcTech.addedAt)) : null);
+                var rcDaysOb = rcStartOb ? Math.floor((now - rcStartOb) / (1000 * 60 * 60 * 24)) : 0;
+                if (rcDaysOb >= 90) {
+                    rmData[rcRm].onboardPctSum += 100;
+                    rmData[rcRm].onboardCount++;
+                } else if (rcTech.checklist.length > 0) {
                     var rcDone = 0;
                     for (var rcci = 0; rcci < rcTech.checklist.length; rcci++) { if (rcTech.checklist[rcci].completed) rcDone++; }
                     rmData[rcRm].onboardPctSum += Math.round((rcDone / rcTech.checklist.length) * 100);
+                    rmData[rcRm].onboardCount++;
+                } else {
+                    rmData[rcRm].onboardPctSum += 0;
                     rmData[rcRm].onboardCount++;
                 }
                 // Overdue items
@@ -5317,7 +5375,7 @@ function loadMetrics() {
         }
         html += '</div></div>';
 
-        // === Section 4: Enhanced Onboarding Pipeline ===
+        // === Section 4: Enhanced Onboarding Pipeline (only < 90 days; 90+ = Ramped) ===
         var pipelineTechs = [];
         for (var oi = 0; oi < activeList.length; oi++) {
             var ot = activeList[oi];
@@ -5328,18 +5386,21 @@ function loadMetrics() {
             var oPct = oTotal > 0 ? Math.round((oDone / oTotal) * 100) : 0;
             var oStartDate = ot.startDate ? new Date(ot.startDate) : (ot.addedAt ? (ot.addedAt.toDate ? ot.addedAt.toDate() : new Date(ot.addedAt)) : null);
             var oDaysSince = oStartDate ? Math.floor((now - oStartDate) / (1000 * 60 * 60 * 24)) : 0;
-            pipelineTechs.push({ tech: ot, done: oDone, total: oTotal, pct: oPct, days: oDaysSince });
+            // Only show techs still in onboarding window (< 90 days)
+            if (oDaysSince < 90) {
+                pipelineTechs.push({ tech: ot, done: oDone, total: oTotal, pct: oPct, days: oDaysSince });
+            }
         }
         // Sort ascending by % (least complete first)
         pipelineTechs.sort(function(a, b) { return a.pct - b.pct; });
 
         html += '<div class="metrics-section">';
-        html += '<div class="metrics-section-title metrics-collapsible-toggle collapsed" onclick="this.classList.toggle(\'collapsed\');this.nextElementSibling.classList.toggle(\'collapsed\')">Onboarding Pipeline</div>';
+        html += '<div class="metrics-section-title metrics-collapsible-toggle collapsed" onclick="this.classList.toggle(\'collapsed\');this.nextElementSibling.classList.toggle(\'collapsed\')">Onboarding Pipeline <span style="font-size:12px;font-weight:400;color:var(--gray);margin-left:8px">' + pipelineTechs.length + ' onboarding &middot; ' + rampedCount + ' ramped (90+ days)</span></div>';
         html += '<div class="metrics-collapsible-body collapsed">';
         html += '<div class="metrics-table-wrapper">';
 
         if (pipelineTechs.length === 0) {
-            html += '<div class="th-empty" style="padding:24px"><p style="color:var(--gray);font-size:13px">No technicians to display</p></div>';
+            html += '<div class="th-empty" style="padding:24px"><p style="color:var(--gray);font-size:13px">All technicians are ramped (90+ days)</p></div>';
         } else {
             html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Status</th><th>Manager</th><th>Days</th><th>Checklist</th><th>Onboarded</th></tr></thead><tbody>';
             for (var di = 0; di < pipelineTechs.length; di++) {
@@ -5371,81 +5432,35 @@ function loadMetrics() {
 
         // (Headcount by Function moved up to after Executive Summary)
 
-        // === Section 6: Retention Rates (existing, unchanged) ===
+        // === Section 6: Retention Rates (company-level) ===
         html += '<div class="metrics-section">';
-        html += '<div class="metrics-section-title">Retention Rates by Manager</div>';
+        html += '<div class="metrics-section-title">Retention Rates</div>';
 
-        var hasAnyTechs = false;
-        for (var ri = 0; ri < techs.length; ri++) {
-            if (techs[ri].startDate || techs[ri].addedAt) { hasAnyTechs = true; break; }
-        }
-
-        if (!hasAnyTechs && techs.length === 0) {
-            html += '<div class="th-empty" style="padding:24px 0"><p style="color:var(--gray);font-size:13px">No technician data yet</p></div>';
-        } else {
-            html += '<div class="metrics-tables-row">';
-
-            var periods = [{ days: 90, label: '90-Day Retention' }, { days: 365, label: '1-Year Retention' }];
-            for (var pri = 0; pri < periods.length; pri++) {
-                var period = periods[pri];
-                html += '<div class="metrics-table-wrapper">';
-                html += '<div class="metrics-table-title">' + period.label + '</div>';
-                html += '<table class="metrics-table"><thead><tr><th>Manager</th><th>Rate</th></tr></thead><tbody>';
-
-                for (var rmi = 0; rmi < rmNames.length; rmi++) {
-                    var rm = rmNames[rmi];
-                    var eligible = 0;
-                    var retained = 0;
-                    for (var ti = 0; ti < techs.length; ti++) {
-                        var t = techs[ti];
-                        if ((t.regionalManager || '') !== rm) continue;
-                        var startDate = t.startDate ? new Date(t.startDate) : (t.addedAt ? (t.addedAt.toDate ? t.addedAt.toDate() : new Date(t.addedAt)) : null);
-                        if (!startDate) continue;
-                        var daysSinceAdded = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-                        if (daysSinceAdded >= period.days) {
-                            eligible++;
-                            if (t.status !== 'terminated') retained++;
-                        }
-                    }
-                    var rateStr, rateClass;
-                    if (eligible === 0) {
-                        rateStr = 'N/A';
-                        rateClass = '';
-                    } else {
-                        var pct = Math.round((retained / eligible) * 100);
-                        rateStr = pct + '%';
-                        rateClass = pct >= 90 ? 'rate-good' : (pct >= 80 ? 'rate-mid' : 'rate-low');
-                    }
-                    html += '<tr><td>' + thEscape(rm) + '</td><td class="' + rateClass + '">' + rateStr + '</td></tr>';
+        var retPeriods = [{ days: 90, label: '90-Day' }, { days: 365, label: '1-Year' }];
+        var retCards = '';
+        for (var pri = 0; pri < retPeriods.length; pri++) {
+            var period = retPeriods[pri];
+            var compEligible = 0;
+            var compRetained = 0;
+            for (var ci = 0; ci < techs.length; ci++) {
+                var ct = techs[ci];
+                var ctStart = ct.startDate ? new Date(ct.startDate) : (ct.addedAt ? (ct.addedAt.toDate ? ct.addedAt.toDate() : new Date(ct.addedAt)) : null);
+                if (!ctStart) continue;
+                var ctDays = Math.floor((now - ctStart) / (1000 * 60 * 60 * 24));
+                if (ctDays >= period.days) {
+                    compEligible++;
+                    if (ct.status !== 'terminated') compRetained++;
                 }
-
-                var compEligible = 0;
-                var compRetained = 0;
-                for (var ci = 0; ci < techs.length; ci++) {
-                    var ct = techs[ci];
-                    var ctStart = ct.startDate ? new Date(ct.startDate) : (ct.addedAt ? (ct.addedAt.toDate ? ct.addedAt.toDate() : new Date(ct.addedAt)) : null);
-                    if (!ctStart) continue;
-                    var ctDays = Math.floor((now - ctStart) / (1000 * 60 * 60 * 24));
-                    if (ctDays >= period.days) {
-                        compEligible++;
-                        if (ct.status !== 'terminated') compRetained++;
-                    }
-                }
-                var compStr, compClass;
-                if (compEligible === 0) {
-                    compStr = 'N/A';
-                    compClass = '';
-                } else {
-                    var compPct = Math.round((compRetained / compEligible) * 100);
-                    compStr = compPct + '%';
-                    compClass = compPct >= 90 ? 'rate-good' : (compPct >= 80 ? 'rate-mid' : 'rate-low');
-                }
-                html += '<tr style="border-top:2px solid #e5e7eb"><td style="font-weight:700">Company</td><td class="' + compClass + '" style="font-weight:700">' + compStr + '</td></tr>';
-                html += '</tbody></table></div>';
             }
-
-            html += '</div>';
+            var compPct = compEligible > 0 ? Math.round((compRetained / compEligible) * 100) : null;
+            var retColor = compPct === null ? 'var(--gray)' : (compPct >= 90 ? '#059669' : (compPct >= 80 ? '#d97706' : '#ef4444'));
+            retCards += '<div class="metrics-card">';
+            retCards += '<div class="metrics-card-number" style="color:' + retColor + '">' + (compPct !== null ? compPct + '%' : 'N/A') + '</div>';
+            retCards += '<div class="metrics-card-label">' + period.label + ' Retention</div>';
+            if (compEligible > 0) retCards += '<div style="font-size:11px;color:var(--gray);margin-top:2px">' + compRetained + ' of ' + compEligible + ' retained</div>';
+            retCards += '</div>';
         }
+        html += '<div class="metrics-exec-cards">' + retCards + '</div>';
         html += '</div>';
 
         // === Section 7: Attrition Rates (existing, unchanged) ===
