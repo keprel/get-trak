@@ -5446,10 +5446,21 @@ function loadMetrics() {
                 var ct = techs[ci];
                 var ctStart = ct.startDate ? new Date(ct.startDate) : (ct.addedAt ? (ct.addedAt.toDate ? ct.addedAt.toDate() : new Date(ct.addedAt)) : null);
                 if (!ctStart) continue;
-                var ctDays = Math.floor((now - ctStart) / (1000 * 60 * 60 * 24));
-                if (ctDays >= period.days) {
+                var ctDaysSinceHire = Math.floor((now - ctStart) / (1000 * 60 * 60 * 24));
+                // Only count techs hired long enough ago to have reached the threshold
+                if (ctDaysSinceHire >= period.days) {
                     compEligible++;
-                    if (ct.status !== 'terminated') compRetained++;
+                    if (ct.status !== 'terminated') {
+                        // Still active — survived past the threshold
+                        compRetained++;
+                    } else {
+                        // Terminated — check if they lasted at least period.days
+                        var ctTermDate = ct.terminatedAt ? (ct.terminatedAt.toDate ? ct.terminatedAt.toDate() : new Date(ct.terminatedAt)) : null;
+                        if (ctTermDate) {
+                            var ctTenure = Math.floor((ctTermDate - ctStart) / (1000 * 60 * 60 * 24));
+                            if (ctTenure >= period.days) compRetained++;
+                        }
+                    }
                 }
             }
             var compPct = compEligible > 0 ? Math.round((compRetained / compEligible) * 100) : null;
