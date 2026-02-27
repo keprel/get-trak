@@ -5362,14 +5362,17 @@ function loadMetrics() {
         }
         var avgActiveTenure = activeTenures.length > 0 ? (activeTenures.reduce(function(a, b) { return a + b; }, 0) / activeTenures.length) : 0;
         var avgTermTenure = termTenures.length > 0 ? (termTenures.reduce(function(a, b) { return a + b; }, 0) / termTenures.length) : 0;
+        console.log('[Tenure Debug] Active tenures:', activeTenures.length, 'avg:', avgActiveTenure.toFixed(1));
+        console.log('[Tenure Debug] Term tenures:', termTenures.length, 'of', terminatedList.length, 'total terminated, avg:', avgTermTenure.toFixed(1));
+        if (termTenures.length < 5) console.log('[Tenure Debug] Term tenure values (months):', termTenures.map(function(v) { return v.toFixed(1); }));
         var longestActiveTenure = activeTenures.length > 0 ? Math.max.apply(null, activeTenures) : 0;
         var shortestActiveTenure = activeTenures.length > 0 ? Math.min.apply(null, activeTenures) : 0;
 
         html += '<div class="metrics-section">';
         html += '<div class="metrics-section-title">Average Tenure</div>';
         html += '<div class="metrics-exec-cards">';
-        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#2563eb">' + avgActiveTenure.toFixed(1) + '</div><div class="metrics-card-label">Avg Active Tenure (mo)</div></div>';
-        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#ef4444">' + avgTermTenure.toFixed(1) + '</div><div class="metrics-card-label">Avg Terminated Tenure (mo)</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#2563eb">' + avgActiveTenure.toFixed(1) + '</div><div class="metrics-card-label">Avg Active Tenure (mo)</div><div style="font-size:11px;color:var(--gray);margin-top:2px">' + activeTenures.length + ' techs</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#ef4444">' + avgTermTenure.toFixed(1) + '</div><div class="metrics-card-label">Avg Terminated Tenure (mo)</div><div style="font-size:11px;color:var(--gray);margin-top:2px">' + termTenures.length + ' of ' + terminatedList.length + ' with dates</div></div>';
         html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#059669">' + longestActiveTenure.toFixed(1) + '</div><div class="metrics-card-label">Longest Active Tenure (mo)</div></div>';
         html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#7c3aed">' + shortestActiveTenure.toFixed(1) + '</div><div class="metrics-card-label">Shortest Active Tenure (mo)</div></div>';
         html += '</div></div>';
