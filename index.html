@@ -2250,6 +2250,14 @@
         .metrics-rm-stat { display: flex; justify-content: space-between; font-size: 13px; color: var(--gray); }
         .metrics-rm-stat span:last-child { font-weight: 700; color: var(--dark); }
 
+        /* Tenure Bucket Bar Chart */
+        .tenure-bucket-chart { margin: 20px 0 8px; }
+        .tenure-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .tenure-bar-label { min-width: 90px; font-size: 12px; font-weight: 600; color: var(--dark); text-align: right; }
+        .tenure-bar-track { flex: 1; height: 24px; background: #f3f4f6; border-radius: 6px; overflow: hidden; position: relative; }
+        .tenure-bar { height: 100%; border-radius: 6px; transition: width 0.6s ease; min-width: 0; }
+        .tenure-bar-count { font-size: 12px; font-weight: 700; color: var(--dark); min-width: 28px; }
+
         /* Enhanced Onboarding */
         .onboarding-bar-wide { width: 100px; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
         .onboarding-bar-wide .onboarding-bar-fill { height: 100%; border-radius: 4px; }
@@ -5218,7 +5226,7 @@ function loadMetrics() {
         // Per-RM data
         var rmData = {};
         for (var rdi = 0; rdi < rmNames.length; rdi++) {
-            rmData[rmNames[rdi]] = { total: 0, active: 0, interview: 0, onboardPctSum: 0, onboardCount: 0, overdueCount: 0 };
+            rmData[rmNames[rdi]] = { total: 0, active: 0, interview: 0, onboardPctSum: 0, onboardCount: 0, overdueCount: 0, tenureSum: 0, tenureCount: 0, terminated: 0 };
         }
         for (var rci = 0; rci < techs.length; rci++) {
             var rcTech = techs[rci];
@@ -5254,6 +5262,14 @@ function loadMetrics() {
                         }
                     }
                 }
+                // Avg tenure for active techs under this manager
+                if (rcTech.status !== 'interview' && rcStartOb) {
+                    rmData[rcRm].tenureSum += (now - rcStartOb) / (1000 * 60 * 60 * 24 * 30.44);
+                    rmData[rcRm].tenureCount++;
+                }
+            } else {
+                // Terminated tech under this manager
+                rmData[rcRm].terminated++;
             }
         }
 
@@ -5324,6 +5340,40 @@ function loadMetrics() {
         html += '<div class="metrics-total">Total Headcount: ' + totalHeadcount + '</div>';
         html += '</div>';
 
+        // === Section 1c: Average Tenure ===
+        var activeTenures = [];
+        for (var ati = 0; ati < activeOnlyList.length; ati++) {
+            var atTech = activeOnlyList[ati];
+            var atStart = atTech.startDate ? new Date(atTech.startDate) : (atTech.addedAt ? (atTech.addedAt.toDate ? atTech.addedAt.toDate() : new Date(atTech.addedAt)) : null);
+            if (atStart) {
+                var atMonths = (now - atStart) / (1000 * 60 * 60 * 24 * 30.44);
+                activeTenures.push(atMonths);
+            }
+        }
+        var termTenures = [];
+        for (var tti = 0; tti < terminatedList.length; tti++) {
+            var ttTech = terminatedList[tti];
+            var ttStart = ttTech.startDate ? new Date(ttTech.startDate) : (ttTech.addedAt ? (ttTech.addedAt.toDate ? ttTech.addedAt.toDate() : new Date(ttTech.addedAt)) : null);
+            var ttEnd = ttTech.terminatedAt ? (ttTech.terminatedAt.toDate ? ttTech.terminatedAt.toDate() : new Date(ttTech.terminatedAt)) : null;
+            if (ttStart && ttEnd) {
+                var ttMonths = (ttEnd - ttStart) / (1000 * 60 * 60 * 24 * 30.44);
+                termTenures.push(ttMonths);
+            }
+        }
+        var avgActiveTenure = activeTenures.length > 0 ? (activeTenures.reduce(function(a, b) { return a + b; }, 0) / activeTenures.length) : 0;
+        var avgTermTenure = termTenures.length > 0 ? (termTenures.reduce(function(a, b) { return a + b; }, 0) / termTenures.length) : 0;
+        var longestActiveTenure = activeTenures.length > 0 ? Math.max.apply(null, activeTenures) : 0;
+        var shortestActiveTenure = activeTenures.length > 0 ? Math.min.apply(null, activeTenures) : 0;
+
+        html += '<div class="metrics-section">';
+        html += '<div class="metrics-section-title">Average Tenure</div>';
+        html += '<div class="metrics-exec-cards">';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#2563eb">' + avgActiveTenure.toFixed(1) + '</div><div class="metrics-card-label">Avg Active Tenure (mo)</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#ef4444">' + avgTermTenure.toFixed(1) + '</div><div class="metrics-card-label">Avg Terminated Tenure (mo)</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#059669">' + longestActiveTenure.toFixed(1) + '</div><div class="metrics-card-label">Longest Active Tenure (mo)</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#7c3aed">' + shortestActiveTenure.toFixed(1) + '</div><div class="metrics-card-label">Shortest Active Tenure (mo)</div></div>';
+        html += '</div></div>';
+
         // === Section 2: Alerts & At-Risk ===
         if (staleInterviews.length + overdueActives.length > 0) {
             html += '<div class="metrics-alerts">';
@@ -5353,21 +5403,23 @@ function loadMetrics() {
             html += '</div>';
         }
 
-        // === Section 3: Per-RM Breakdown ===
+        // === Section 3: Manager Scorecard ===
         html += '<div class="metrics-section">';
-        html += '<div class="metrics-section-title">Per-RM Breakdown</div>';
+        html += '<div class="metrics-section-title">Manager Scorecard</div>';
         html += '<div class="metrics-rm-grid">';
         for (var rgi = 0; rgi < rmNames.length; rgi++) {
             var rgName = rmNames[rgi];
             var rgd = rmData[rgName];
             var rgAvg = rgd.onboardCount > 0 ? Math.round(rgd.onboardPctSum / rgd.onboardCount) : 0;
+            var rgTenure = rgd.tenureCount > 0 ? (rgd.tenureSum / rgd.tenureCount).toFixed(1) : '—';
             html += '<div class="metrics-rm-card">';
             html += '<div class="metrics-rm-name">' + thEscape(rgName) + '</div>';
             html += '<div class="metrics-rm-stats">';
             html += '<div class="metrics-rm-stat"><span>Total Techs</span><span>' + rgd.total + '</span></div>';
-            html += '<div class="metrics-rm-stat"><span>Active</span><span>' + rgd.active + '</span></div>';
-            html += '<div class="metrics-rm-stat"><span>Interview</span><span>' + rgd.interview + '</span></div>';
+            html += '<div class="metrics-rm-stat"><span>Active / Interview</span><span>' + rgd.active + ' / ' + rgd.interview + '</span></div>';
             html += '<div class="metrics-rm-stat"><span>Avg Onboarding</span><span>' + rgAvg + '%</span></div>';
+            html += '<div class="metrics-rm-stat"><span>Avg Tenure (mo)</span><span>' + rgTenure + '</span></div>';
+            html += '<div class="metrics-rm-stat"><span>Terminated</span><span style="color:' + (rgd.terminated > 0 ? '#ef4444' : 'var(--dark)') + '">' + rgd.terminated + '</span></div>';
             if (rgd.overdueCount > 0) {
                 html += '<div class="metrics-rm-stat"><span>Overdue Items</span><span style="color:#ef4444">' + rgd.overdueCount + '</span></div>';
             }
@@ -5504,6 +5556,47 @@ function loadMetrics() {
         html += '<div class="attrition-card attrition-quit"><div class="attrition-card-number">' + quitPct + '%</div><div class="attrition-card-label">Voluntary (Quit)</div></div>';
         html += '<div class="attrition-card attrition-fired"><div class="attrition-card-number">' + firedPct + '%</div><div class="attrition-card-label">Involuntary (Fired)</div></div>';
         html += '</div>';
+
+        // Attrition by Tenure Bucket
+        var tenureBuckets = [
+            { label: '0–30 days', min: 0, max: 30 },
+            { label: '31–60 days', min: 31, max: 60 },
+            { label: '61–90 days', min: 61, max: 90 },
+            { label: '91–180 days', min: 91, max: 180 },
+            { label: '181–365 days', min: 181, max: 365 },
+            { label: '365+ days', min: 366, max: Infinity }
+        ];
+        var bucketCounts = [];
+        for (var tbi = 0; tbi < tenureBuckets.length; tbi++) bucketCounts.push(0);
+        for (var tbi2 = 0; tbi2 < terminatedList.length; tbi2++) {
+            var tbTech = terminatedList[tbi2];
+            var tbStart = tbTech.startDate ? new Date(tbTech.startDate) : (tbTech.addedAt ? (tbTech.addedAt.toDate ? tbTech.addedAt.toDate() : new Date(tbTech.addedAt)) : null);
+            var tbEnd = tbTech.terminatedAt ? (tbTech.terminatedAt.toDate ? tbTech.terminatedAt.toDate() : new Date(tbTech.terminatedAt)) : null;
+            if (tbStart && tbEnd) {
+                var tbDays = Math.floor((tbEnd - tbStart) / (1000 * 60 * 60 * 24));
+                for (var tbi3 = 0; tbi3 < tenureBuckets.length; tbi3++) {
+                    if (tbDays >= tenureBuckets[tbi3].min && tbDays <= tenureBuckets[tbi3].max) {
+                        bucketCounts[tbi3]++;
+                        break;
+                    }
+                }
+            }
+        }
+        var maxBucket = Math.max.apply(null, bucketCounts);
+        var bucketColors = ['#fca5a5', '#f87171', '#ef4444', '#dc2626', '#b91c1c', '#991b1b'];
+
+        html += '<div style="margin-top:20px">';
+        html += '<div class="metrics-section-title" style="font-size:13px;margin-bottom:12px">Attrition by Tenure Bucket</div>';
+        html += '<div class="tenure-bucket-chart">';
+        for (var tbi4 = 0; tbi4 < tenureBuckets.length; tbi4++) {
+            var barPct = maxBucket > 0 ? Math.round((bucketCounts[tbi4] / maxBucket) * 100) : 0;
+            html += '<div class="tenure-bar-row">';
+            html += '<div class="tenure-bar-label">' + tenureBuckets[tbi4].label + '</div>';
+            html += '<div class="tenure-bar-track"><div class="tenure-bar" style="width:' + barPct + '%;background:' + bucketColors[tbi4] + '"></div></div>';
+            html += '<div class="tenure-bar-count">' + bucketCounts[tbi4] + '</div>';
+            html += '</div>';
+        }
+        html += '</div></div>';
 
         html += '<div class="metrics-section-title metrics-collapsible-toggle collapsed" onclick="this.classList.toggle(\'collapsed\');this.nextElementSibling.classList.toggle(\'collapsed\')" style="margin-top:16px">Attrition Breakdown</div>';
         html += '<div class="metrics-collapsible-body collapsed">';
