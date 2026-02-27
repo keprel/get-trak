@@ -5353,7 +5353,8 @@ function loadMetrics() {
         var termTenures = [];
         for (var tti = 0; tti < terminatedList.length; tti++) {
             var ttTech = terminatedList[tti];
-            var ttStart = ttTech.startDate ? new Date(ttTech.startDate) : null;
+            // Use addedAt first (Firestore Timestamp set from startDate during import), fall back to startDate string
+            var ttStart = ttTech.addedAt ? (ttTech.addedAt.toDate ? ttTech.addedAt.toDate() : new Date(ttTech.addedAt)) : (ttTech.startDate ? new Date(ttTech.startDate) : null);
             var ttEnd = ttTech.terminatedAt ? (ttTech.terminatedAt.toDate ? ttTech.terminatedAt.toDate() : new Date(ttTech.terminatedAt)) : null;
             if (ttStart && ttEnd && ttEnd > ttStart) {
                 var ttMonths = (ttEnd - ttStart) / (1000 * 60 * 60 * 24 * 30.44);
@@ -5362,9 +5363,6 @@ function loadMetrics() {
         }
         var avgActiveTenure = activeTenures.length > 0 ? (activeTenures.reduce(function(a, b) { return a + b; }, 0) / activeTenures.length) : 0;
         var avgTermTenure = termTenures.length > 0 ? (termTenures.reduce(function(a, b) { return a + b; }, 0) / termTenures.length) : 0;
-        console.log('[Tenure Debug] Active tenures:', activeTenures.length, 'avg:', avgActiveTenure.toFixed(1));
-        console.log('[Tenure Debug] Term tenures:', termTenures.length, 'of', terminatedList.length, 'total terminated, avg:', avgTermTenure.toFixed(1));
-        if (termTenures.length < 5) console.log('[Tenure Debug] Term tenure values (months):', termTenures.map(function(v) { return v.toFixed(1); }));
         var longestActiveTenure = activeTenures.length > 0 ? Math.max.apply(null, activeTenures) : 0;
         var shortestActiveTenure = activeTenures.length > 0 ? Math.min.apply(null, activeTenures) : 0;
 
@@ -5573,9 +5571,9 @@ function loadMetrics() {
         for (var tbi = 0; tbi < tenureBuckets.length; tbi++) bucketCounts.push(0);
         for (var tbi2 = 0; tbi2 < terminatedList.length; tbi2++) {
             var tbTech = terminatedList[tbi2];
-            var tbStart = tbTech.startDate ? new Date(tbTech.startDate) : (tbTech.addedAt ? (tbTech.addedAt.toDate ? tbTech.addedAt.toDate() : new Date(tbTech.addedAt)) : null);
+            var tbStart = tbTech.addedAt ? (tbTech.addedAt.toDate ? tbTech.addedAt.toDate() : new Date(tbTech.addedAt)) : (tbTech.startDate ? new Date(tbTech.startDate) : null);
             var tbEnd = tbTech.terminatedAt ? (tbTech.terminatedAt.toDate ? tbTech.terminatedAt.toDate() : new Date(tbTech.terminatedAt)) : null;
-            if (tbStart && tbEnd) {
+            if (tbStart && tbEnd && tbEnd > tbStart) {
                 var tbDays = Math.floor((tbEnd - tbStart) / (1000 * 60 * 60 * 24));
                 for (var tbi3 = 0; tbi3 < tenureBuckets.length; tbi3++) {
                     if (tbDays >= tenureBuckets[tbi3].min && tbDays <= tenureBuckets[tbi3].max) {
