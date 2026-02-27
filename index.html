@@ -2177,6 +2177,11 @@
         /* Metrics Dashboard */
         .metrics-section { margin-bottom: 32px; }
         .metrics-section-title { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 16px; letter-spacing: -0.3px; }
+        .metrics-collapsible-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px; }
+        .metrics-collapsible-toggle::after { content: '\25B2'; font-size: 11px; color: var(--gray); transition: transform 0.2s; }
+        .metrics-collapsible-toggle.collapsed::after { transform: rotate(180deg); }
+        .metrics-collapsible-body { overflow: hidden; transition: max-height 0.3s ease, opacity 0.2s ease; max-height: 2000px; opacity: 1; }
+        .metrics-collapsible-body.collapsed { max-height: 0; opacity: 0; }
         .metrics-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
         .metrics-card { padding: 18px; border-radius: 12px; border: 1px solid #f3f4f6; background: white; text-align: center; }
         .metrics-card-number { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
@@ -3057,12 +3062,13 @@
                     <input type="date" id="th-tech-interview-date">
                 </div>
                 <div class="th-form-group">
-                    <label>Regional Manager</label>
+                    <label>Manager</label>
                     <select id="th-tech-rm">
                         <option value="Brandon">Brandon</option>
                         <option value="Scott">Scott</option>
                         <option value="Tyler">Tyler</option>
                         <option value="Aaron">Aaron</option>
+                        <option value="Apryl">Apryl</option>
                     </select>
                 </div>
                 <div class="th-form-group">
@@ -4853,7 +4859,7 @@ document.getElementById('th-tech-save-btn').addEventListener('click', function()
             buildEventEmail('New Technician Added', [
                 ['Name', name],
                 ['Position', position || 'Not specified'],
-                ['Regional Manager', rmValue || 'Not assigned'],
+                ['Manager', rmValue || 'Not assigned'],
                 ['Role', roleValue || 'Technician'],
                 ['Added By', thUser ? thUser.email : 'Unknown']
             ]),
@@ -4980,12 +4986,12 @@ function loadTechnicians() {
             html += '<input type="date" class="th-status-select" value="' + thEscape(t.startDate || '') + '" onchange="saveTechStartDate(\'' + t._id + '\',this.value)" style="min-width:140px">';
             html += '</div>';
 
-            // Regional Manager dropdown
+            // Manager dropdown
             html += '<div class="th-assignment-row">';
-            html += '<label>Regional Manager:</label>';
+            html += '<label>Manager:</label>';
             html += '<select class="th-status-select" onchange="saveTechField(\'' + t._id + '\',\'regionalManager\',this.value)">';
             if (!t.regionalManager) html += '<option value="" selected disabled>Select...</option>';
-            var rmOptions = ['Brandon','Scott','Tyler','Aaron'];
+            var rmOptions = ['Brandon','Scott','Tyler','Aaron','Apryl'];
             for (var ri = 0; ri < rmOptions.length; ri++) {
                 html += '<option' + (t.regionalManager === rmOptions[ri] ? ' selected' : '') + '>' + rmOptions[ri] + '</option>';
             }
@@ -5104,7 +5110,7 @@ function loadMetrics() {
         });
 
         var now = new Date();
-        var rmNames = ['Brandon', 'Scott', 'Tyler', 'Aaron'];
+        var rmNames = ['Brandon', 'Scott', 'Tyler', 'Aaron', 'Apryl'];
         var html = '';
 
         // === Precomputation ===
@@ -5238,6 +5244,28 @@ function loadMetrics() {
         html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#7c3aed">' + companyAvgOnboarding + '%</div><div class="metrics-card-label">Avg Onboarding %</div></div>';
         html += '</div></div>';
 
+        // === Section 1b: Headcount by Function (moved up) ===
+        var techCount = 0;
+        var podLeaderCount = 0;
+        for (var i = 0; i < techs.length; i++) {
+            if (techs[i].status !== 'terminated') {
+                if (techs[i].role === 'Pod Leader') podLeaderCount++;
+                else techCount++;
+            }
+        }
+        var rmCount = 5;
+        var totalHeadcount = techCount + podLeaderCount + rmCount;
+
+        html += '<div class="metrics-section">';
+        html += '<div class="metrics-section-title">Headcount by Function</div>';
+        html += '<div class="metrics-cards">';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#2563eb">' + techCount + '</div><div class="metrics-card-label">Technicians</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#7c3aed">' + podLeaderCount + '</div><div class="metrics-card-label">Pod Leaders</div></div>';
+        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#059669">' + rmCount + '</div><div class="metrics-card-label">Managers</div></div>';
+        html += '</div>';
+        html += '<div class="metrics-total">Total Headcount: ' + totalHeadcount + '</div>';
+        html += '</div>';
+
         // === Section 2: Alerts & At-Risk ===
         if (staleInterviews.length + overdueActives.length > 0) {
             html += '<div class="metrics-alerts">';
@@ -5306,13 +5334,14 @@ function loadMetrics() {
         pipelineTechs.sort(function(a, b) { return a.pct - b.pct; });
 
         html += '<div class="metrics-section">';
-        html += '<div class="metrics-section-title">Onboarding Pipeline</div>';
+        html += '<div class="metrics-section-title metrics-collapsible-toggle collapsed" onclick="this.classList.toggle(\'collapsed\');this.nextElementSibling.classList.toggle(\'collapsed\')">Onboarding Pipeline</div>';
+        html += '<div class="metrics-collapsible-body collapsed">';
         html += '<div class="metrics-table-wrapper">';
 
         if (pipelineTechs.length === 0) {
             html += '<div class="th-empty" style="padding:24px"><p style="color:var(--gray);font-size:13px">No technicians to display</p></div>';
         } else {
-            html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Status</th><th>Regional Manager</th><th>Days</th><th>Checklist</th><th>Onboarded</th></tr></thead><tbody>';
+            html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Status</th><th>Manager</th><th>Days</th><th>Checklist</th><th>Onboarded</th></tr></thead><tbody>';
             for (var di = 0; di < pipelineTechs.length; di++) {
                 var dp = pipelineTechs[di];
                 var dt = dp.tech;
@@ -5338,32 +5367,13 @@ function loadMetrics() {
 
         html += '</div>';
         html += '</div>';
-
-        // === Section 5: Headcount by Function (existing, unchanged) ===
-        var techCount = 0;
-        var podLeaderCount = 0;
-        for (var i = 0; i < techs.length; i++) {
-            if (techs[i].status !== 'terminated') {
-                if (techs[i].role === 'Pod Leader') podLeaderCount++;
-                else techCount++;
-            }
-        }
-        var rmCount = 4;
-        var totalHeadcount = techCount + podLeaderCount + rmCount;
-
-        html += '<div class="metrics-section">';
-        html += '<div class="metrics-section-title">Headcount by Function</div>';
-        html += '<div class="metrics-cards">';
-        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#2563eb">' + techCount + '</div><div class="metrics-card-label">Technicians</div></div>';
-        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#7c3aed">' + podLeaderCount + '</div><div class="metrics-card-label">Pod Leaders</div></div>';
-        html += '<div class="metrics-card"><div class="metrics-card-number" style="color:#059669">' + rmCount + '</div><div class="metrics-card-label">Regional Managers</div></div>';
         html += '</div>';
-        html += '<div class="metrics-total">Total Headcount: ' + totalHeadcount + '</div>';
-        html += '</div>';
+
+        // (Headcount by Function moved up to after Executive Summary)
 
         // === Section 6: Retention Rates (existing, unchanged) ===
         html += '<div class="metrics-section">';
-        html += '<div class="metrics-section-title">Retention Rates by Regional Manager</div>';
+        html += '<div class="metrics-section-title">Retention Rates by Manager</div>';
 
         var hasAnyTechs = false;
         for (var ri = 0; ri < techs.length; ri++) {
@@ -5380,7 +5390,7 @@ function loadMetrics() {
                 var period = periods[pri];
                 html += '<div class="metrics-table-wrapper">';
                 html += '<div class="metrics-table-title">' + period.label + '</div>';
-                html += '<table class="metrics-table"><thead><tr><th>Regional Manager</th><th>Rate</th></tr></thead><tbody>';
+                html += '<table class="metrics-table"><thead><tr><th>Manager</th><th>Rate</th></tr></thead><tbody>';
 
                 for (var rmi = 0; rmi < rmNames.length; rmi++) {
                     var rm = rmNames[rmi];
@@ -5469,9 +5479,10 @@ function loadMetrics() {
         html += '<div class="attrition-card attrition-fired"><div class="attrition-card-number">' + firedPct + '%</div><div class="attrition-card-label">Involuntary (Fired)</div></div>';
         html += '</div>';
 
+        html += '<div class="metrics-section-title metrics-collapsible-toggle collapsed" onclick="this.classList.toggle(\'collapsed\');this.nextElementSibling.classList.toggle(\'collapsed\')" style="margin-top:16px">Attrition Breakdown</div>';
+        html += '<div class="metrics-collapsible-body collapsed">';
         html += '<div class="metrics-table-wrapper">';
-        html += '<div class="metrics-table-title">Attrition Breakdown</div>';
-        html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Type</th><th>Reason</th><th>Regional Manager</th></tr></thead><tbody>';
+        html += '<table class="metrics-table"><thead><tr><th>Technician</th><th>Type</th><th>Reason</th><th>Manager</th></tr></thead><tbody>';
         if (recentTerms.length === 0) {
             html += '<tr><td colspan="4" style="text-align:center;color:var(--gray);padding:20px">No terminations in the last 12 months</td></tr>';
         } else {
@@ -5484,6 +5495,7 @@ function loadMetrics() {
             }
         }
         html += '</tbody></table></div>';
+        html += '</div>';
         html += '</div>';
 
         // === Section 8: Recent Activity Feed ===
@@ -5572,7 +5584,7 @@ function changeTechStatus(techId, newStatus, selectEl) {
                 buildEventEmail('Status Change', [
                     ['Technician', t.name],
                     ['New Status', statusLabel],
-                    ['Regional Manager', t.regionalManager || 'Not assigned'],
+                    ['Manager', t.regionalManager || 'Not assigned'],
                     ['Changed By', thUser ? thUser.email : 'Unknown']
                 ]),
                 t.name + ' status changed to ' + statusLabel
@@ -5594,12 +5606,12 @@ function saveTechStartDate(techId, value) {
     });
 }
 
-// --- Save generic field (Regional Manager, Role) ---
+// --- Save generic field (Manager, Role) ---
 function saveTechField(techId, field, value) {
     var update = {};
     update[field] = value;
     db.collection('technicians').doc(techId).update(update).then(function() {
-        showToast(field === 'regionalManager' ? 'Regional Manager updated' : 'Role updated');
+        showToast(field === 'regionalManager' ? 'Manager updated' : 'Role updated');
     }).catch(function(err) {
         showToast('Error: ' + err.message);
     });
@@ -5635,7 +5647,7 @@ function openTerminateDialog(techId, selectEl) {
                         ['Technician', t.name],
                         ['Type', type],
                         ['Reason', reason || 'No reason given'],
-                        ['Regional Manager', t.regionalManager || 'Not assigned'],
+                        ['Manager', t.regionalManager || 'Not assigned'],
                         ['Terminated By', thUser ? thUser.email : 'Unknown']
                     ]),
                     t.name + ' has been terminated (' + type + '). Reason: ' + (reason || 'None')
@@ -5789,7 +5801,7 @@ function handleTechDocFile(techId, input) {
                     buildEventEmail('Document Uploaded', [
                         ['Technician', t.name],
                         ['File Name', file.name],
-                        ['Regional Manager', t.regionalManager || 'Not assigned'],
+                        ['Manager', t.regionalManager || 'Not assigned'],
                         ['Uploaded By', thUser ? thUser.email : 'Unknown']
                     ]),
                     'A document (' + file.name + ') was uploaded for ' + t.name
@@ -6252,7 +6264,7 @@ function buildChecklistReminderEmail(tech, label, triggerDays, daysSinceStart) {
         '<p style="font-size:15px;color:#1a1a2e;margin:0 0 16px"><strong>' + thEscape(label) + '</strong> is due for <strong>' + thEscape(tech.name) + '</strong></p>' +
         '<table style="width:100%;font-size:13px;color:#4b5563;border-collapse:collapse">' +
         '<tr><td style="padding:6px 0;font-weight:600">Technician</td><td style="padding:6px 0">' + thEscape(tech.name) + '</td></tr>' +
-        '<tr><td style="padding:6px 0;font-weight:600">Regional Manager</td><td style="padding:6px 0">' + thEscape(tech.regionalManager || 'Not assigned') + '</td></tr>' +
+        '<tr><td style="padding:6px 0;font-weight:600">Manager</td><td style="padding:6px 0">' + thEscape(tech.regionalManager || 'Not assigned') + '</td></tr>' +
         '<tr><td style="padding:6px 0;font-weight:600">Start Date</td><td style="padding:6px 0">' + thEscape(tech.startDate) + '</td></tr>' +
         '<tr><td style="padding:6px 0;font-weight:600">Days Active</td><td style="padding:6px 0">' + daysSinceStart + ' days</td></tr>' +
         '<tr><td style="padding:6px 0;font-weight:600">Trigger</td><td style="padding:6px 0">After ' + triggerDays + ' days</td></tr>' +
