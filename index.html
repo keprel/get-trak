@@ -2476,6 +2476,46 @@
         .sh-badge-red { background: #7f1d1d; color: #fca5a5; }
 
         /* Heatmap */
+        .sh-global-filters {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .sh-global-filters .sh-filter-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .sh-pill-group {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #2a2d3a;
+        }
+        .sh-pill-group button {
+            background: #1a1d2e;
+            color: #6b7280;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border-right: 1px solid #2a2d3a;
+            font-family: inherit;
+        }
+        .sh-pill-group button:last-child { border-right: none; }
+        .sh-pill-group button:hover { color: #d1d5db; background: #22253a; }
+        .sh-pill-group button.active { background: #2563eb; color: #fff; }
+        .sh-global-filters select {
+            background: #1a1d2e;
+            border: 1px solid #2a2d3a;
+            color: #d1d5db;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
         .sh-heatmap-controls {
             display: flex;
             gap: 12px;
@@ -3238,8 +3278,23 @@
         </div>
     </div>
     <div class="saleshub-content">
+        <!-- Global Filters -->
+        <div class="sh-global-filters">
+            <span class="sh-filter-label">Time Period:</span>
+            <div class="sh-pill-group" id="sh-time-pills">
+                <button onclick="shSetPeriod('week',this)">This Week</button>
+                <button onclick="shSetPeriod('lastweek',this)">Last Week</button>
+                <button onclick="shSetPeriod('month',this)">This Month</button>
+                <button class="active" onclick="shSetPeriod('30d',this)">Last 30 Days</button>
+            </div>
+            <span class="sh-filter-label" style="margin-left:8px">Sales Rep:</span>
+            <select id="sh-global-rep-filter" onchange="shApplyFilters()">
+                <option value="all">All Reps</option>
+            </select>
+        </div>
+
         <!-- KPI Row -->
-        <div class="sh-section-title">Overview (Last 30 Days)</div>
+        <div class="sh-section-title" id="sh-overview-title">Overview (Last 30 Days)</div>
         <div class="sh-kpi-row">
             <div class="sh-kpi-card">
                 <div class="sh-kpi-value" id="sh-kpi-total">—</div>
@@ -6962,13 +7017,111 @@ function shFormatDate(d) {
     return (m < 10 ? '0' : '') + m + '/' + (day < 10 ? '0' : '') + day;
 }
 
-// --- Open / Close ---
+// --- Filtering ---
 var shCurrentVisits = [];
+var shAllVisits = [];
+var shCurrentPeriod = '30d';
+
+function shGetMonday(d) {
+    var dt = new Date(d);
+    var day = dt.getDay();
+    var diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+    dt.setDate(diff);
+    dt.setHours(0, 0, 0, 0);
+    return dt;
+}
+
+function shGetDateRange(period) {
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (period === 'week') {
+        var mon = shGetMonday(today);
+        var sun = new Date(mon);
+        sun.setDate(mon.getDate() + 6);
+        return [mon, sun];
+    }
+    if (period === 'lastweek') {
+        var mon = shGetMonday(today);
+        mon.setDate(mon.getDate() - 7);
+        var sun = new Date(mon);
+        sun.setDate(mon.getDate() + 6);
+        return [mon, sun];
+    }
+    if (period === 'month') {
+        var first = new Date(today.getFullYear(), today.getMonth(), 1);
+        var last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return [first, last];
+    }
+    // 30d
+    var start = new Date(today);
+    start.setDate(today.getDate() - 29);
+    return [start, today];
+}
+
+function shPeriodLabel() {
+    if (shCurrentPeriod === 'week') return 'This Week';
+    if (shCurrentPeriod === 'lastweek') return 'Last Week';
+    if (shCurrentPeriod === 'month') return 'This Month';
+    return 'Last 30 Days';
+}
+
+function shFilterVisits() {
+    var repVal = document.getElementById('sh-global-rep-filter').value;
+    var range = shGetDateRange(shCurrentPeriod);
+    var start = range[0], end = range[1];
+    return shAllVisits.filter(function(v) {
+        var d = new Date(v.dateStr + 'T00:00:00');
+        if (d < start || d > end) return false;
+        if (repVal !== 'all' && v.repId !== repVal) return false;
+        return true;
+    });
+}
+
+function shSetPeriod(period, btn) {
+    shCurrentPeriod = period;
+    var buttons = document.querySelectorAll('#sh-time-pills button');
+    for (var i = 0; i < buttons.length; i++) buttons[i].classList.remove('active');
+    btn.classList.add('active');
+    shApplyFilters();
+}
+
+function shPopulateGlobalRepFilter() {
+    var sel = document.getElementById('sh-global-rep-filter');
+    sel.innerHTML = '<option value="all">All Reps</option>';
+    for (var i = 0; i < SH_REPS.length; i++) {
+        sel.innerHTML += '<option value="' + SH_REPS[i].id + '">' + shEscape(SH_REPS[i].name) + '</option>';
+    }
+}
+
+function shApplyFilters() {
+    shCurrentVisits = shFilterVisits();
+    document.getElementById('sh-overview-title').textContent = 'Overview (' + shPeriodLabel() + ')';
+    shRenderKPIs(shCurrentVisits);
+    var daily = shComputeDailyTotals(shCurrentVisits);
+    shRenderDailyChart(daily);
+    var repSummary = shComputeRepSummary(shCurrentVisits);
+    shRenderByRepChart(repSummary);
+    shRenderRepTable(repSummary);
+    var accountSummary = shComputeAccountSummary(shCurrentVisits);
+    shRenderAccountTable(accountSummary);
+    shRenderHeatmap(shCurrentVisits,
+        document.getElementById('sh-heatmap-rep-filter').value,
+        document.getElementById('sh-heatmap-search').value);
+}
+
+// --- Open / Close ---
 
 function openSalesHub() {
     salesHubSection.style.display = 'block';
     document.body.style.overflow = 'hidden';
     document.getElementById('saleshub-user-email').textContent = thUser ? thUser.email : '';
+
+    // Reset filters to defaults
+    shCurrentPeriod = '30d';
+    var pills = document.querySelectorAll('#sh-time-pills button');
+    for (var i = 0; i < pills.length; i++) {
+        pills[i].classList.toggle('active', pills[i].textContent === 'Last 30 Days');
+    }
 
     // Show loading state
     document.getElementById('sh-kpi-total').textContent = '...';
@@ -6984,17 +7137,10 @@ function openSalesHub() {
             var d = new Date(SH_EXPORTED_AT);
             document.getElementById('sh-last-updated').textContent = 'Data updated: ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
         }
-        shCurrentVisits = shBuildVisitsFromLeads();
-        shRenderKPIs(shCurrentVisits);
-        var daily = shComputeDailyTotals(shCurrentVisits);
-        shRenderDailyChart(daily);
-        var repSummary = shComputeRepSummary(shCurrentVisits);
-        shRenderByRepChart(repSummary);
-        shRenderRepTable(repSummary);
-        var accountSummary = shComputeAccountSummary(shCurrentVisits);
-        shRenderAccountTable(accountSummary);
+        shAllVisits = shBuildVisitsFromLeads();
+        shPopulateGlobalRepFilter();
         shPopulateRepFilter();
-        shRenderHeatmap(shCurrentVisits, 'all', '');
+        shApplyFilters();
         shRenderPipeline();
         shRenderWonLost();
         shRenderAttention();
