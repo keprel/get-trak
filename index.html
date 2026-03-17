@@ -6535,14 +6535,16 @@ function shFetchSpotioData() {
         .then(function(data) {
             SH_EXPORTED_AT = data.exportedAt || '';
             // Build user map and reps list (tracked reps only)
-            var SH_TRACKED_EMAILS = ['sydney.graft@adas-safe.com', 'derek.davidson@adas-safe.com', 'jesse.starr@adas-safe.com', 'info@mtadas.com'];
+            var SH_TRACKED_EMAILS = ['sydney.graft@adas-safe.com', 'derek.davidson@adas-safe.com', 'jesse.starr@adas-safe.com', 'info@mtadas.com', 'rm@adas-safe.com'];
+            var SH_NAME_OVERRIDES = {'rm@adas-safe.com': 'RM'};
             SH_USER_MAP = {};
             SH_REPS = [];
             for (var i = 0; i < data.users.length; i++) {
                 var u = data.users[i];
                 SH_USER_MAP[u.id] = u;
                 if (u.status === 'active' && SH_TRACKED_EMAILS.indexOf(u.email.toLowerCase()) !== -1) {
-                    SH_REPS.push({ id: u.id, name: u.firstName + ' ' + u.lastName, territory: '', email: u.email, role: u.role });
+                    var displayName = SH_NAME_OVERRIDES[u.email.toLowerCase()] || (u.firstName + ' ' + u.lastName);
+                    SH_REPS.push({ id: u.id, name: displayName, territory: '', email: u.email, role: u.role });
                 }
             }
             // Build territory map and assign to reps
